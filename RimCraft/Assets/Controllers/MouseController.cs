@@ -1,0 +1,141 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class MouseController : MonoBehaviour {
+    [SerializeField]
+    GameObject circleCursorPrefab;      // Объект курсор
+
+
+    Vector3 lastFramePosition;          // Позиция мыши взятая из предыдущего кадра
+    Vector3 dragStartPosition;          // Позиция мыши с которой начато перетаскивание
+    Vector3 currFramePosition;          // Позиция мыши в данный момент
+
+	// Use this for initialization
+	void Start () {
+		
+	}
+	
+	// Update is called once per frame
+	void Update () {
+        //Текущее положение мыши относительно мира
+        currFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        currFramePosition.z = 0;
+
+        //UpdateCursor();
+        UpdateDragging();
+        UpdateCameraMovement();
+
+        //Записываем текущее положение мыши для следующего кадра (в след кадре - это будет уже предыдущее положение мыши)
+        lastFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        lastFramePosition.z = 0;
+	}
+
+    // Обновить положение курсора
+    /*private void UpdateCursor()
+    {
+        Tile tileUnderMouse = GetTileAtWorldCoord(currFramePosition);
+        if (tileUnderMouse != null)
+        {
+            circleCursor.SetActive(true);
+            Vector3 cursorPosition = new Vector3(tileUnderMouse.X, tileUnderMouse.Y, 0);
+            circleCursor.transform.position = cursorPosition;
+        }
+        else
+        {
+            circleCursor.SetActive(false);
+        }
+    }*/
+
+    // Обработка нажатия левой кнопки мыши
+    private void UpdateDragging()
+    {
+        int start_x = Mathf.FloorToInt(dragStartPosition.x);
+        int end_x = Mathf.FloorToInt(currFramePosition.x);
+
+        // Если вдруг конечный x меньше начального, то меняем их значения местами 
+        if (end_x < start_x)
+        {
+            int tmp = end_x;
+            end_x = start_x;
+            start_x = tmp;
+        }
+
+        int start_y = Mathf.FloorToInt(dragStartPosition.y);
+        int end_y = Mathf.FloorToInt(currFramePosition.y);
+
+        // Если вдруг конечный y меньше начального, то меняем их значения местами 
+        if (end_y < start_y)
+        {
+            int tmp = end_y;
+            end_y = start_y;
+            start_y = tmp;
+        }
+
+        // Это обработка drag&drop. Обработка прямоугольной области содержащей тайлы
+        // Начало перетаскивания
+        if (Input.GetMouseButtonDown(0)) // нажата в предыдущем фрейме
+        {
+            //Запоминаем позицию с которой начали перетаскивание
+            dragStartPosition = currFramePosition;
+
+        }
+
+        if (Input.GetMouseButton(0)) // всё еще нажата
+        {
+            // Отобразить сетку подсказок, какие тайлы попали в область выделения
+            // Перебираем все тайлы попавшие в прямоугольную область описанную перетаскиванием
+            // Отображаем подсказку
+            for (int x = start_x; x <= end_x; x++)
+            {
+                for (int y = start_y; y <= end_y; y++)
+                {
+                    // Отображаем подсказку на каждом тайле
+                    Tile t = WorldController.Instance.World.GetTileAt(x, y);
+                    if (t != null)
+                    {
+                        Instantiate(circleCursorPrefab, new Vector3(x, y, 0), Quaternion.identity);
+                    }
+                }
+            }
+        }
+
+        // Конец перетаскивания
+        if (Input.GetMouseButtonUp(0)) // отпущена
+        {
+            // Перебираем все тайлы попавшие в прямоугольную область описанную перетаскиванием
+            for (int x = start_x; x <= end_x; x++)
+            {
+                for (int y = start_y; y <= end_y; y++)
+                {
+                    // Меняем тип тайла на ПОЛ
+                    Tile t = WorldController.Instance.World.GetTileAt(x, y);
+                    if (t != null)
+                    {
+                        t.Type = Tile.TileType.Floor;
+                    }
+                }
+            }
+        }
+    }
+
+    // Перетаскивание камеры мышкой
+    private void UpdateCameraMovement()
+    {
+        if (Input.GetMouseButton(1) || Input.GetMouseButton(2)) //Нажата правая или средняя клавиша мыши
+        {
+            //Разница между предыдущим и текущим положением мыши
+            Vector3 diff = lastFramePosition - currFramePosition;
+
+            Camera.main.transform.Translate(diff);
+        }
+    }
+
+    public Tile GetTileAtWorldCoord(Vector3 coord)
+    {
+        int x = Mathf.FloorToInt(coord.x);
+        int y = Mathf.FloorToInt(coord.y);
+
+        return WorldController.Instance.World.GetTileAt(x, y);
+    }
+}

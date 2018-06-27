@@ -10,19 +10,34 @@ public class WorldController : MonoBehaviour {
     [SerializeField]
     private Sprite floorSprite;
 
-    World world;
+    private static WorldController instance;
 
-	// Use this for initialization
-	void Start () {
+    public World World { get; protected set; }
+
+    public static WorldController Instance
+    {
+        get
+        {
+            return instance;
+        }
+    }
+
+    // Use this for initialization
+    void Start () {
+        //Создаем прямой доступ к единственному экземпляру
+        if (instance != null)
+            Debug.LogError("На сцене больше одного экземпляра WorldController");
+        instance = this;
+
         //Create a world with empty Tiles
-        world = new World();
+        World = new World();
 
         //Создать GO для каждого тайла, чтобы отображать их в игре
-        for (int x = 0; x < world.Width; x++)
+        for (int x = 0; x < World.Width; x++)
         {
-            for (int y = 0; y < world.Height; y++)
+            for (int y = 0; y < World.Height; y++)
             {
-                Tile tile_data = world.GetTileAt(x, y);
+                Tile tile_data = World.GetTileAt(x, y);
 
                 GameObject tile_go = new GameObject();
                 tile_go.name = "Tile_" + x + "_" + y;
@@ -34,7 +49,7 @@ public class WorldController : MonoBehaviour {
             }
         }
 
-        world.RandomizeTiles();
+        World.RandomizeTiles();
 	}
 	
 	// Update is called once per frame
