@@ -9,6 +9,7 @@ public class MouseController : MonoBehaviour {
 
     bool buildModeIsObjects = false;            // Устанавливаем ли мы объекты или правим тайлы
     TileType buildModeTile = TileType.Floor;
+    string buildModeObjectType;
 
     Vector3 lastFramePosition;                  // Позиция мыши взятая из предыдущего кадра
     Vector3 currFramePosition;                  // Позиция мыши в данный момент
@@ -141,6 +142,8 @@ public class MouseController : MonoBehaviour {
                             // Устанавливаем объект и назначаем тайл для него
 
                             // FIXME: пока что мы только устанавливаем стены и не имеем возможности установить что либо еще
+
+                            WorldController.Instance.World.PlaceFurniture(buildModeObjectType, t);
                         }
                         else
                         {
@@ -181,9 +184,11 @@ public class MouseController : MonoBehaviour {
         buildModeTile = TileType.Empty;
     }
 
-    public void SetMode_BuildWall()
+    public void SetMode_BuildFurniture(string objectType)
     {
+        Debug.Log("Wall");
         buildModeIsObjects = true;
+        buildModeObjectType = objectType;
     }
 
     public Tile GetTileAtWorldCoord(Vector3 coord)

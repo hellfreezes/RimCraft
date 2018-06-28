@@ -18,11 +18,11 @@ public class Tile {
     Action<Tile> cbTileTypeChanged;
 
     //LooseObject - объекты, которые можно переносить
-    LooseObject looseObject;
+    Inventory inventory;
     //InstalledObject - объекты, которые стационано установлены (Мебель например)
-    InstalledObject installedObject;
-
-    World world; //Ссылка на мир
+    public Furniture furniture { get; protected set; }
+    
+    public World world { get; protected set; } //Ссылка на мир
     int x; //Место по X в мире
     int y; //Место по Y в мире
 
@@ -78,8 +78,22 @@ public class Tile {
         cbTileTypeChanged -= callback;
     }
 
-    public bool PlaceObject()
+    public bool PlaceFurniture(Furniture objInstance)
     {
+        if (objInstance == null)
+        {
+            // Убираем объект
+            furniture = null;
+            return true;
+        }
 
+        if (furniture == objInstance)
+        {
+            Debug.LogError("Попытка поставить объект в тайл, который уже имеет объект");
+            return false;
+        }
+
+        furniture = objInstance;
+        return true;
     }
 }

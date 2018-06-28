@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,10 +9,15 @@ using UnityEngine;
 public class World {
     //Двумерная база данных класса
     Tile[,] tiles;
+
+    Dictionary<string, Furniture> furniturePrototypes;
+
     // Ширина мира в кол-ве тайлов
     int width;
     // Высота мира в кол-ве тайлов
     int height;
+
+    Action<Furniture> cbFurnitureCreated;
 
     // Доступ к аргументам
     public int Width
@@ -49,7 +55,15 @@ public class World {
 
         Debug.Log("World created with " + (width * height) + " tiles.");
 
-        InstalledObject wallPrototype = InstalledObject.CreatePrototype("Wall", 0);
+        CreateFurniturePrototype();
+    }
+
+    void CreateFurniturePrototype()
+    {
+        furniturePrototypes = new Dictionary<string, Furniture>();
+
+        Furniture wallPrototype = Furniture.CreatePrototype("Wall", 0, 1, 1, true);
+        furniturePrototypes.Add("Wall", wallPrototype);
     }
 
     // Возвращает ссылку на Tile объект находящийся в мире по конкретным координатам
@@ -71,7 +85,7 @@ public class World {
         {
             for (int y = 0; y < height; y++)
             {
-                if (Random.Range(0,2) == 0)
+                if (UnityEngine.Random.Range(0,2) == 0)
                 {
                     tiles[x, y].Type = TileType.Empty;
                 } else
@@ -80,5 +94,38 @@ public class World {
                 }
             }
         }
+    }
+
+    public void PlaceFurniture(string objectType, Tile t)
+    {
+        // Пока метод принимает 1 тайл для расположения - надо исправить это позже
+        if (furniturePrototypes.ContainsKey(objectType) == false)
+        {
+            Debug.LogError("furniture не содержит прототипа для: " + objectType);
+            return;
+        }
+
+        Furniture obj = Furniture.PlaceInstance(furniturePrototypes[objectType], t);
+        if (obj == null)
+        {
+            //Разместить объект не получилось т.к. в тайле уже есть объект
+            return;
+        }
+
+
+        if (cbFurnitureCreated != null)
+        {
+            cbFurnitureCreated(obj);
+        }
+    }
+
+    public void RegisterFurnitureCreated(Action<Furniture> callback)
+    {
+        cbFurnitureCreated += callback;
+    }
+
+    public void UnregisterFurnitureCreated(Action<Furniture> callback)
+    {
+        cbFurnitureCreated -= callback;
     }
 }
