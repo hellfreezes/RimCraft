@@ -3,15 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+// Базовый тип тайла. Первый слой - поверхность
+public enum TileType { Empty, Floor };
+
 /* 
  * Tile - класс независимы от движка Unity. Хранит в себе информацию о клетке из которых состоит мир.
  * Будет содержать информацию о поверхности, ссылться на строения или вещи, хранить качество окружающей
  * среды
  */
 public class Tile {
-    // Базовый тип тайла. Первый слой - поверхность
-    public enum TileType { Empty, Floor };
-
     TileType type = TileType.Empty;
     // Делегат хранящий в себе методы принимающие аргумент Tile
     Action<Tile> cbTileTypeChanged;
@@ -75,5 +76,10 @@ public class Tile {
     public void UnregisterTileTypeChangeCallBack(Action<Tile> callback)
     {
         cbTileTypeChanged -= callback;
+    }
+
+    public bool PlaceObject()
+    {
+
     }
 }

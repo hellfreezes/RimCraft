@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class MouseController : MonoBehaviour {
     [SerializeField]
     GameObject circleCursorPrefab;              // Объект курсор
 
+    bool buildModeIsObjects = false;            // Устанавливаем ли мы объекты или правим тайлы
+    TileType buildModeTile = TileType.Floor;
 
     Vector3 lastFramePosition;                  // Позиция мыши взятая из предыдущего кадра
     Vector3 currFramePosition;                  // Позиция мыши в данный момент
@@ -52,6 +55,10 @@ public class MouseController : MonoBehaviour {
     // Обработка нажатия левой кнопки мыши
     private void UpdateDragging()
     {
+        // Если мышь над элементом интерфейса, то отменяем выполнение
+        if (EventSystem.current.IsPointerOverGameObject())
+            return;
+
         // Это обработка drag&drop. Обработка прямоугольной области содержащей тайлы
         // Начало перетаскивания - фиксируем координаты тут
         if (Input.GetMouseButtonDown(0)) // нажата в предыдущем фрейме
@@ -125,9 +132,22 @@ public class MouseController : MonoBehaviour {
                 {
                     // Меняем тип тайла на ПОЛ
                     Tile t = WorldController.Instance.World.GetTileAt(x, y);
+
                     if (t != null)
                     {
-                        t.Type = Tile.TileType.Floor;
+                        if (buildModeIsObjects == true)
+                        {
+                            // Режим установки объектов.
+                            // Устанавливаем объект и назначаем тайл для него
+
+                            // FIXME: пока что мы только устанавливаем стены и не имеем возможности установить что либо еще
+                        }
+                        else
+                        {
+                            // Режим изменения тайлов
+
+                            t.Type = buildModeTile;
+                        }
                     }
                 }
             }
@@ -147,6 +167,23 @@ public class MouseController : MonoBehaviour {
 
         Camera.main.orthographicSize -= Camera.main.orthographicSize * Input.GetAxis("Mouse ScrollWheel");
         Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize, 3f, 25f);
+    }
+
+    public void SetMode_BuildFloor()
+    {
+        buildModeIsObjects = false;
+        buildModeTile = TileType.Floor;
+    }
+
+    public void SetMode_Bulldozer()
+    {
+        buildModeIsObjects = false;
+        buildModeTile = TileType.Empty;
+    }
+
+    public void SetMode_BuildWall()
+    {
+        buildModeIsObjects = true;
     }
 
     public Tile GetTileAtWorldCoord(Vector3 coord)
