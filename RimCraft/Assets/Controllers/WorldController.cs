@@ -10,6 +10,8 @@ public class WorldController : MonoBehaviour {
 
     [SerializeField]
     private Sprite floorSprite;
+    [SerializeField]
+    private Sprite emptySprite;
 
     private static WorldController instance;
 
@@ -60,7 +62,11 @@ public class WorldController : MonoBehaviour {
                 tile_go.transform.position = new Vector3(tile_data.X, tile_data.Y, 0);
                 tile_go.transform.SetParent(this.transform, true);
 
-                tile_go.AddComponent<SpriteRenderer>();
+                //Рендер для объекта
+                //Также добавляем пустой спрайт
+                SpriteRenderer spriteRenderer = tile_go.AddComponent<SpriteRenderer>();
+                spriteRenderer.sprite = emptySprite;
+
                 // tile_data.RegisterTileTypeChangeCallBack((tile) => { OnTileTypeChanged(tile, tile_go); }); // Старый вариант без использования tileGameObjectMap
 
                 // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 
@@ -69,7 +75,11 @@ public class WorldController : MonoBehaviour {
             }
         }
 
-        World.RandomizeTiles();
+        // Центруем камеру
+
+        Camera.main.transform.position = new Vector3(World.Width / 2, World.Height / 2, Camera.main.transform.position.z);
+
+        //World.RandomizeTiles();
     }
 
     // Update is called once per frame

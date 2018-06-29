@@ -186,7 +186,6 @@ public class MouseController : MonoBehaviour {
 
     public void SetMode_BuildFurniture(string objectType)
     {
-        Debug.Log("Wall");
         buildModeIsObjects = true;
         buildModeObjectType = objectType;
     }

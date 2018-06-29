@@ -22,6 +22,9 @@ public class Furniture {
 
     Action<Furniture> cbOnChanged;
 
+    // Накопитель функций для проверки возможности установки фурнитуры
+    Func<Tile, bool> funcPositionValidation;
+
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
     protected Furniture()
@@ -39,11 +42,19 @@ public class Furniture {
         obj.height = height;
         obj.linksToNeighbour = linksToNeighbour;
 
+        obj.funcPositionValidation = obj.IsVaildPosition;
+
         return obj;
     }
 
     static public Furniture PlaceInstance (Furniture proto, Tile tile)
     {
+        if (proto.funcPositionValidation(tile) == false)
+        {
+            Debug.LogError("Неподходящее место для установки");
+            return null;
+        }
+
         Furniture obj = new Furniture();
 
         obj.objectType = proto.objectType;
@@ -101,5 +112,31 @@ public class Furniture {
     public void UnregisterOnChangeCallback(Action<Furniture> callback)
     {
         cbOnChanged -= callback;
+    }
+
+    public bool IsVaildPosition(Tile tile)
+    {
+        // Проверяет можно ли ипользовать тайл для установки фурнитуры
+        if (tile.Type != TileType.Floor)
+        {
+            return false;
+        }
+
+        // Также проверяет занятость
+        if (tile.furniture != null)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool IsVaildPositionForDoor(Tile tile)
+    {
+        if (IsVaildPosition(tile) == false)
+            return false;
+        // Проверка на наличие пары стен N/S или W/E
+
+        return true;
     }
 }
