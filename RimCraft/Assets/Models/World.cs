@@ -18,6 +18,12 @@ public class World {
     int height;
 
     Action<Furniture> cbFurnitureCreated;
+    Action<Tile> cbTileChanged;
+
+    //TODO: Возможно очередь надо вынести в отдельный специальный класс контролирующий очередь
+    //Пока он PUBLIC !!!
+    //Очередь работ
+    public Queue<Job> jobQueue;
 
     // Доступ к аргументам
     public int Width
@@ -38,6 +44,8 @@ public class World {
 
     public World(int width = 100, int height = 100)
     {
+        jobQueue = new Queue<Job>(); // Создаем новую очередь работ
+
         this.width = width;
         this.height = height;
 
@@ -50,6 +58,7 @@ public class World {
             for (int y = 0; y < height; y++)
             {
                 tiles[x, y] = new Tile(this, x, y);
+                tiles[x, y].RegisterTileTypeChangeCallBack(OnTileChanged);
             }
         }
 
@@ -127,5 +136,30 @@ public class World {
     public void UnregisterFurnitureCreated(Action<Furniture> callback)
     {
         cbFurnitureCreated -= callback;
+    }
+
+    public void RegisterTileChanged(Action<Tile> callback)
+    {
+        cbTileChanged += callback;
+    }
+
+    public void UnregisterTileChanged(Action<Tile> callback)
+    {
+        cbTileChanged -= callback;
+    }
+
+    void OnTileChanged(Tile t)
+    {
+        if (cbTileChanged == null)
+        {
+            return;
+        }
+
+        cbTileChanged(t);
+    }
+
+    public bool IsFurniturePlacmentVaild(string furnitureType, Tile t)
+    {
+        return furniturePrototypes[furnitureType].funcPositionValidation(t);
     }
 }

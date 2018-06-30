@@ -141,9 +141,21 @@ public class MouseController : MonoBehaviour {
                             // Режим установки объектов.
                             // Устанавливаем объект и назначаем тайл для него
 
-                            // FIXME: пока что мы только устанавливаем стены и не имеем возможности установить что либо еще
+                            // FIXME: следующая строка создает фурнитуру немедленно
+                            // WorldController.Instance.World.PlaceFurniture(buildModeObjectType, t);
 
-                            WorldController.Instance.World.PlaceFurniture(buildModeObjectType, t);
+                            // FIXME: Следующиую проверку нужно делать не здесь!
+                            // Проверяем а можно ли вообще в этот тайл установить задание на работу
+                            WorldController.Instance.World.IsFurniturePlacmentVaild();
+
+                            // Добавляем работу по установки фурнитуры в очередь
+                            string furnitureType = buildModeObjectType;
+                            Job j = new Job(t, (theJob)=> {
+                                WorldController.Instance.World.PlaceFurniture(furnitureType, theJob.tile);
+                            });
+
+                            //Временное решение: мнгновенное выполнение работы
+                            WorldController.Instance.World.jobQueue.Enqueue(j);
                         }
                         else
                         {

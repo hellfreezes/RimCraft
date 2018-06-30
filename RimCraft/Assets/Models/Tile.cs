@@ -15,7 +15,7 @@ public enum TileType { Empty, Floor };
 public class Tile {
     TileType type = TileType.Empty;
     // Делегат хранящий в себе методы принимающие аргумент Tile
-    Action<Tile> cbTileTypeChanged;
+    Action<Tile> cbTileChanged;
 
     //LooseObject - объекты, которые можно переносить
     Inventory inventory;
@@ -41,8 +41,8 @@ public class Tile {
             TileType oldType = type;
             type = value;
             //Запускаем делегат на изменение и даем понять всем подписчикам, что изменен тип тайла
-            if (cbTileTypeChanged != null && type != oldType)
-                cbTileTypeChanged(this);
+            if (cbTileChanged != null && type != oldType)
+                cbTileChanged(this);
         }
     }
     public int X
@@ -71,11 +71,11 @@ public class Tile {
     //Публичные методы регистрирующие подписчиком на cbTileTypeChanged делегат
     public void RegisterTileTypeChangeCallBack(Action<Tile> callback)
     {
-        cbTileTypeChanged += callback;
+        cbTileChanged += callback;
     }
     public void UnregisterTileTypeChangeCallBack(Action<Tile> callback)
     {
-        cbTileTypeChanged -= callback;
+        cbTileChanged -= callback;
     }
 
     public bool PlaceFurniture(Furniture objInstance)

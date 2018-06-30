@@ -32,7 +32,7 @@ public class WorldController : MonoBehaviour {
     }
 
     // Use this for initialization
-    void Start() {
+    void OnEnable() {
         //Создаем прямой доступ к единственному экземпляру
         if (instance != null)
             Debug.LogError("На сцене больше одного экземпляра WorldController");
@@ -71,12 +71,12 @@ public class WorldController : MonoBehaviour {
 
                 // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 
                 // Если событие изменения происходит в tile_data, то вызывается метод OnTileTypeChanged
-                tile_data.RegisterTileTypeChangeCallBack(OnTileTypeChanged);
             }
         }
 
-        // Центруем камеру
+        World.RegisterTileChanged(OnTileChanged);
 
+        // Центруем камеру
         Camera.main.transform.position = new Vector3(World.Width / 2, World.Height / 2, Camera.main.transform.position.z);
 
         //World.RandomizeTiles();
@@ -108,29 +108,37 @@ public class WorldController : MonoBehaviour {
 
             tileGameObjectMap.Remove(tile_data);
 
-            tile_data.UnregisterTileTypeChangeCallBack(OnTileTypeChanged);
+            tile_data.UnregisterTileTypeChangeCallBack(OnTileChanged);
 
             Destroy(tile_go);
         }
     }
 
-    // Метод, который подписывается на изменение тайла
-    void OnTileTypeChanged(Tile tile_data)
+    // Метод, который подписывается на событие в World, вызывается когда тайл меняется
+    void OnTileChanged(Tile tile_data)
     {
+        // Этот метод меняет спрайт тайла
+
+        // Сначала метод находит связанный с тайлом GameObject
+        // Используя при этом словарь связей tileGameObjectMap
         if (tileGameObjectMap.ContainsKey(tile_data) == false)
         {
             Debug.LogError("Связь между " + tile_data.Type + " и каким либо объектом на сцене отсутсвует.");
             return;
         }
 
+        // tile_go - это GameObject тайла
         GameObject tile_go = tileGameObjectMap[tile_data];
 
+        // Если по какой либо причине он равен null, то возвращаем ошибку
         if (tile_go == null)
         {
             Debug.LogError(tile_data.Type + " пуст.");
             return;
         }
 
+        // FIXME: жуткий хардкодинг использующий ifelse
+        // Меняем спрайт тайла в зависимости от его типа
         if (tile_data.Type == TileType.Floor)
         {
             tile_go.GetComponent<SpriteRenderer>().sprite = floorSprite;
@@ -140,10 +148,12 @@ public class WorldController : MonoBehaviour {
             tile_go.GetComponent<SpriteRenderer>().sprite = null;
         } else
         {
+            // Возвращаем ошибку если тип у тайла не зарегистрирован в TileType (разве это возможно?)
             Debug.LogError("Unrecognized tile type");
         }
     }
 
+    // Подписчик на событие в World, которое происходит когда фурнитура создается
     void OnFurnitureCreated(Furniture furn)
     {
         //Debug.Log("OnInstalledObjectCreated");
@@ -169,6 +179,7 @@ public class WorldController : MonoBehaviour {
         furn.RegisterOnChangeCallback(OnFurnitureChanged);
     }
 
+    // Подписчик на событие в Furniture, которое вызывается когда что либо в фурнитуре меняется
     void OnFurnitureChanged(Furniture furn)
     {
         // Меняем графику если это необходимо
@@ -182,6 +193,9 @@ public class WorldController : MonoBehaviour {
         furn_go.GetComponent<SpriteRenderer>().sprite = GetSpriteForFurniture(furn);
     }
 
+    // Если графика спрайта имеет зависимость от соседних спрайтов, то вычисляем
+    // Например это может быть стена
+    // Если зависимости нет, то выбираем спрайт из ресурсов по имени объекта
     Sprite GetSpriteForFurniture(Furniture obj)
     {
         if (obj.linksToNeighbour == false) // Если объект не является составным

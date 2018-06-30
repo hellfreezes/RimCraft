@@ -23,7 +23,7 @@ public class Furniture {
     Action<Furniture> cbOnChanged;
 
     // Накопитель функций для проверки возможности установки фурнитуры
-    Func<Tile, bool> funcPositionValidation;
+    public Func<Tile, bool> funcPositionValidation;
 
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
