@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,12 +22,14 @@ public class Character {
         }
     }
 
-    Tile currTile;  // место в котором персонаж находимся
+    public Tile currTile { get; protected set; }  // место в котором персонаж находимся
     Tile destTile;  // Место в которое движется персонаж. Если мы не двигаемся то curr=dest
     float movementProcentage;
-
-
+    
     float speed = 2f;
+
+    Action<Character> cbOnCharacterChanged;
+
 
     // Конструктор
     public Character(Tile tile)
@@ -36,6 +39,8 @@ public class Character {
 
     public void Update(float deltaTime)
     {
+        // Debug.Log("Character update");
+
         // Проверяем есть ли у нас цель куда идти
         if (currTile == destTile)
             return;
@@ -47,7 +52,7 @@ public class Character {
         float distThisFrame = speed * deltaTime;
 
         // Переводим пройденное расстояние в проценты
-        float procThisFrame = distToTravel / distToTravel;
+        float procThisFrame = distThisFrame / distToTravel;
 
         // Получаем итого сколько прошли в процентах
         movementProcentage += procThisFrame;
@@ -60,6 +65,9 @@ public class Character {
             currTile = destTile;
             movementProcentage = 0;
         }
+
+        if (cbOnCharacterChanged != null)
+            cbOnCharacterChanged(this);
     }
 
     // Установить тайл назначения движения
@@ -71,5 +79,15 @@ public class Character {
         }
 
         destTile = tile;
+    }
+
+    public void RegisterOnCharacterChangedCallback(Action<Character> callback)
+    {
+        cbOnCharacterChanged += callback;
+    }
+
+    public void UnregisterOnCharacterChangedCallback(Action<Character> callback)
+    {
+        cbOnCharacterChanged -= callback;
     }
 }

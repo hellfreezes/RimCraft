@@ -35,7 +35,8 @@ public class WorldController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-
+        //Тут можно управлять скоростью игры. вплоть до остановки
+        world.Update(Time.deltaTime);
     }
 
     public Tile GetTileAtWorldCoord(Vector3 coord)

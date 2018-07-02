@@ -24,6 +24,7 @@ public class World {
 
     Action<Furniture> cbFurnitureCreated;
     Action<Tile> cbTileChanged;
+    Action<Character> cbCharacterCreated;
 
     // Доступ к аргументам
     public int Width
@@ -68,8 +69,27 @@ public class World {
 
         characters = new List<Character>();
 
-        Character c = new Character(tiles[Width / 2, Height / 2]);
+        
+    }
+
+    public void Update(float deltaTime)
+    {
+        foreach (Character c in characters)
+        {
+            c.Update(deltaTime);
+        }
+    }
+
+    public Character CreateCharacter(Tile t)
+    {
+
+        //Debug.Log("CreateCharacter");
+        Character c = new Character(t);
         characters.Add(c);
+        if (cbCharacterCreated != null) 
+            cbCharacterCreated(c);
+
+        return c;
     }
 
     void CreateFurniturePrototype()
@@ -131,6 +151,16 @@ public class World {
         {
             cbFurnitureCreated(obj);
         }
+    }
+
+    public void RegisterCharacterCreated(Action<Character> callback)
+    {
+        cbCharacterCreated += callback;
+    }
+
+    public void UnregisterCharacterCreated(Action<Character> callback)
+    {
+        cbCharacterCreated -= callback;
     }
 
     public void RegisterFurnitureCreated(Action<Furniture> callback)
