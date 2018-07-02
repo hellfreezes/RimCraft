@@ -100,7 +100,7 @@ public class Tile {
     }
 
     // вернет истину если передаваемый тайл является соседним текущему
-    public bool IsNeighbour(Tile tile)
+    public bool IsNeighbour(Tile tile, bool diagOkay = false)
     {
         if (this.X == tile.X && (this.Y == tile.Y - 1 || this.Y == tile.Y + 1))
         {
@@ -111,6 +111,14 @@ public class Tile {
             return true;
         }
 
+        if (diagOkay == true)
+        {
+
+            if (this.X == tile.X + 1 && (this.Y == tile.Y + 1 || this.Y == tile.Y - 1))
+                return true;
+            if (this.X == tile.X - 1 && (this.Y == tile.Y + 1 || this.Y == tile.Y - 1))
+                return true;
+        }
         return false;
     }
 }

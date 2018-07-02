@@ -10,6 +10,9 @@ public class World {
     //Двумерная база данных класса
     Tile[,] tiles;
 
+    // Список персонажей
+    List<Character> characters;
+
     Dictionary<string, Furniture> furniturePrototypes;
 
     // Ширина мира в кол-ве тайлов
@@ -62,6 +65,11 @@ public class World {
         Debug.Log("World created with " + (width * height) + " tiles.");
 
         CreateFurniturePrototype();
+
+        characters = new List<Character>();
+
+        Character c = new Character(tiles[Width / 2, Height / 2]);
+        characters.Add(c);
     }
 
     void CreateFurniturePrototype()
