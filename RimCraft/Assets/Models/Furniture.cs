@@ -23,7 +23,7 @@ public class Furniture {
     Action<Furniture> cbOnChanged;
 
     // Накопитель функций для проверки возможности установки фурнитуры
-    public Func<Tile, bool> funcPositionValidation;
+    Func<Tile, bool> funcPositionValidation;
 
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
@@ -42,7 +42,7 @@ public class Furniture {
         obj.height = height;
         obj.linksToNeighbour = linksToNeighbour;
 
-        obj.funcPositionValidation = obj.IsVaildPosition;
+        obj.funcPositionValidation = obj.__IsVaildPosition;
 
         return obj;
     }
@@ -116,6 +116,11 @@ public class Furniture {
 
     public bool IsVaildPosition(Tile tile)
     {
+        return funcPositionValidation(tile);
+    }
+
+    public bool __IsVaildPosition(Tile tile)
+    {
         // Проверяет можно ли ипользовать тайл для установки фурнитуры
         if (tile.Type != TileType.Floor)
         {
@@ -131,9 +136,9 @@ public class Furniture {
         return true;
     }
 
-    public bool IsVaildPositionForDoor(Tile tile)
+    public bool __IsVaildPositionForDoor(Tile tile)
     {
-        if (IsVaildPosition(tile) == false)
+        if (__IsVaildPosition(tile) == false)
             return false;
         // Проверка на наличие пары стен N/S или W/E
 

@@ -17,13 +17,10 @@ public class World {
     // Высота мира в кол-ве тайлов
     int height;
 
+    public JobQueue jobQueue;
+
     Action<Furniture> cbFurnitureCreated;
     Action<Tile> cbTileChanged;
-
-    //TODO: Возможно очередь надо вынести в отдельный специальный класс контролирующий очередь
-    //Пока он PUBLIC !!!
-    //Очередь работ
-    public Queue<Job> jobQueue;
 
     // Доступ к аргументам
     public int Width
@@ -44,7 +41,7 @@ public class World {
 
     public World(int width = 100, int height = 100)
     {
-        jobQueue = new Queue<Job>(); // Создаем новую очередь работ
+        jobQueue = new JobQueue(); // Создаем новую очередь работ
 
         this.width = width;
         this.height = height;
@@ -160,6 +157,17 @@ public class World {
 
     public bool IsFurniturePlacmentVaild(string furnitureType, Tile t)
     {
-        return furniturePrototypes[furnitureType].funcPositionValidation(t);
+        return furniturePrototypes[furnitureType].IsVaildPosition(t);
     }
-}
+
+    public Furniture GetFurniturePrototype(string objectType)
+    {
+        if (furniturePrototypes.ContainsKey(objectType) == false)
+        {
+            Debug.LogError("Нет экземпляра фурнитуры для введенного типа");
+            return null;
+        }
+
+        return furniturePrototypes[objectType];
+    }
+} 

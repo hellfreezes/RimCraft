@@ -6,11 +6,11 @@ using UnityEngine.EventSystems;
 public class MouseController : MonoBehaviour {
     [SerializeField]
     GameObject circleCursorPrefab;              // Объект курсор
+    [SerializeField]
+    GameObject buildModeControllerGO;
 
-    bool buildModeIsObjects = false;            // Устанавливаем ли мы объекты или правим тайлы
-    TileType buildModeTile = TileType.Floor;
-    string buildModeObjectType;
 
+    BuildModeController buildModeController;
     Vector3 lastFramePosition;                  // Позиция мыши взятая из предыдущего кадра
     Vector3 currFramePosition;                  // Позиция мыши в данный момент
 
@@ -20,6 +20,7 @@ public class MouseController : MonoBehaviour {
     // Use this for initialization
     void Start () {
         dragPreviewGameObjects = new List<GameObject>();
+        buildModeController = buildModeControllerGO.GetComponent<BuildModeController>();
 	}
 	
 	// Update is called once per frame
@@ -36,22 +37,6 @@ public class MouseController : MonoBehaviour {
         lastFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         lastFramePosition.z = 0;
 	}
-
-    // Обновить положение курсора
-    /*private void UpdateCursor()
-    {
-        Tile tileUnderMouse = GetTileAtWorldCoord(currFramePosition);
-        if (tileUnderMouse != null)
-        {
-            circleCursor.SetActive(true);
-            Vector3 cursorPosition = new Vector3(tileUnderMouse.X, tileUnderMouse.Y, 0);
-            circleCursor.transform.position = cursorPosition;
-        }
-        else
-        {
-            circleCursor.SetActive(false);
-        }
-    }*/
 
     // Обработка нажатия левой кнопки мыши
     private void UpdateDragging()
@@ -112,7 +97,7 @@ public class MouseController : MonoBehaviour {
                 {
                     // Отображаем подсказку на каждом тайле - это маркер в данный момент в виде кружка
                     // Визуализация маркера происходит с помощью отображения копии circleCursorPrefab
-                    Tile t = WorldController.Instance.World.GetTileAt(x, y);
+                    Tile t = WorldController.Instance.world.GetTileAt(x, y);
                     if (t != null)
                     {
                         GameObject go = SimplePool.Spawn(circleCursorPrefab, new Vector3(x, y, 0), Quaternion.identity);
@@ -132,37 +117,12 @@ public class MouseController : MonoBehaviour {
                 for (int y = start_y; y <= end_y; y++)
                 {
                     // Меняем тип тайла на ПОЛ
-                    Tile t = WorldController.Instance.World.GetTileAt(x, y);
+                    Tile t = WorldController.Instance.world.GetTileAt(x, y);
 
                     if (t != null)
                     {
-                        if (buildModeIsObjects == true)
-                        {
-                            // Режим установки объектов.
-                            // Устанавливаем объект и назначаем тайл для него
-
-                            // FIXME: следующая строка создает фурнитуру немедленно
-                            // WorldController.Instance.World.PlaceFurniture(buildModeObjectType, t);
-
-                            // FIXME: Следующиую проверку нужно делать не здесь!
-                            // Проверяем а можно ли вообще в этот тайл установить задание на работу
-                            WorldController.Instance.World.IsFurniturePlacmentVaild();
-
-                            // Добавляем работу по установки фурнитуры в очередь
-                            string furnitureType = buildModeObjectType;
-                            Job j = new Job(t, (theJob)=> {
-                                WorldController.Instance.World.PlaceFurniture(furnitureType, theJob.tile);
-                            });
-
-                            //Временное решение: мнгновенное выполнение работы
-                            WorldController.Instance.World.jobQueue.Enqueue(j);
-                        }
-                        else
-                        {
-                            // Режим изменения тайлов
-
-                            t.Type = buildModeTile;
-                        }
+                        //Попытка дать комманду
+                        buildModeController.DoBuild(t);
                     }
                 }
             }
@@ -182,31 +142,5 @@ public class MouseController : MonoBehaviour {
 
         Camera.main.orthographicSize -= Camera.main.orthographicSize * Input.GetAxis("Mouse ScrollWheel");
         Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize, 3f, 25f);
-    }
-
-    public void SetMode_BuildFloor()
-    {
-        buildModeIsObjects = false;
-        buildModeTile = TileType.Floor;
-    }
-
-    public void SetMode_Bulldozer()
-    {
-        buildModeIsObjects = false;
-        buildModeTile = TileType.Empty;
-    }
-
-    public void SetMode_BuildFurniture(string objectType)
-    {
-        buildModeIsObjects = true;
-        buildModeObjectType = objectType;
-    }
-
-    public Tile GetTileAtWorldCoord(Vector3 coord)
-    {
-        int x = Mathf.FloorToInt(coord.x);
-        int y = Mathf.FloorToInt(coord.y);
-
-        return WorldController.Instance.World.GetTileAt(x, y);
     }
 }

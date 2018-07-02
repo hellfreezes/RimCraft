@@ -13,13 +13,19 @@ public class Job {
 
     float jobTime = 1.0f; // время необходимое для выполнение работы
 
+    //FIXME: временное решение связывающее экземпляр работы конкретно с фурнитурой. 
+    //А хотелось бы чтобы работа могла быть связана с разными объектами
+    // Использовать Generic
+    public string jobObjectType { get; protected set; }
+
     // События которые расскажут всем подписчикам о том что происходит
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
     Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
 
-    public Job(Tile tile, Action<Job> cbJobComplete, float jobTime = 1f)
+    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime = 1f)
     {
         this.tile = tile;
+        this.jobObjectType = jobObjectType;
         this.cbJobComplete += cbJobComplete;
     }
 
