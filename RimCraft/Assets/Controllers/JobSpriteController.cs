@@ -42,8 +42,6 @@ public class JobSpriteController : MonoBehaviour {
 
     void OnJobEnded(Job job)
     {
-        Debug.Log("Удаляет спрайт работы");
-
         //Удалить спрайт
         GameObject job_go = jobGameObjectMap[job];
 

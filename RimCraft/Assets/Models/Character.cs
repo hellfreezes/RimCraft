@@ -52,8 +52,9 @@ public class Character {
                 //Получить работу
                 destTile = myJob.tile;
                 //Подписываем метод OnJobEnded на указанные ниже события происходящие в Job
+
+                //myJob.RegisterJobCompleteCallback(OnJobEnded);
                 myJob.RegisterJobCompleteCallback(OnJobEnded);
-                Debug.Log(myJob + ": подписываемся");
                 myJob.RegisterJobCancelCallback(OnJobEnded);
             }
         }
@@ -69,6 +70,7 @@ public class Character {
         }
 
         // Вычисляем расстояние до цели
+        // Вчисляем длинну гипотинузы (квадратный корень из суммы квадратов катетов).
         float distToTravel = Mathf.Sqrt(Mathf.Pow(currTile.X - destTile.X, 2) + Mathf.Pow(currTile.Y - destTile.Y, 2));
 
         // Вычисляем какое в этом фрейме прошли расстояние
@@ -107,8 +109,6 @@ public class Character {
     // Метод вызываемый когда произошло событие отмены или завершения определенной работы
     void OnJobEnded (Job j)
     {
-        Debug.Log("OnJobEnded");
-
         if (j != myJob)
         {
             Debug.LogError("Персонажу сообщили о завершении чужой работы. Видимо мы забыли где то отписаться от события.");
@@ -116,7 +116,6 @@ public class Character {
         }
 
         myJob = null; // Убираем связь. Работы закончена
-        Debug.Log("Работа окончена");
     }
 
     public void RegisterOnCharacterChangedCallback(Action<Character> callback)

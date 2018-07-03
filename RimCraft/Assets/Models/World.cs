@@ -100,7 +100,40 @@ public class World {
         furniturePrototypes.Add("Wall", wallPrototype);
     }
 
-    // Возвращает ссылку на Tile объект находящийся в мире по конкретным координатам
+
+    //ВРЕМЕННАЯ
+    public void SetupPathfindingExample()
+    {
+        Debug.Log("Запущена временная функция для построения карты");
+
+        // Создаем временную карту для проведения тестов по поиску пути
+
+        int l = width / 2 - 5;
+        int h = height / 2 - 5;
+
+        for (int x = l - 5; x < l + 15; x++)
+        {
+            for (int y = h - 5; y < h + 15; y++)
+            {
+                tiles[x, y].Type = TileType.Floor;
+
+                if (x == 1 || x == (l+9) || y == h || y == (h+9))
+                {
+                    if (x != (l+9) && y != (h+4))
+                    {
+                        PlaceFurniture("Wall", tiles[x, y]);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Возвращает ссылку на Tile объект находящийся в мире по конкретным координатам
+    /// </summary>
+    /// <param name="x">Координата сетки по X</param>
+    /// <param name="y">Координата сетки по Y</param>
+    /// <returns>Возвращает ссылку на экземпляр Тайла по указанным координатам</returns>
     public Tile GetTileAt(int x, int y)
     {
         // Проверка попадают ли введенные координаты в рамки мира

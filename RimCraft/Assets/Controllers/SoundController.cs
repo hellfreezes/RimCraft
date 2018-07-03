@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//FIXME: Тут полный хардкодинг. Нет ни словарей ни привязанностей к определенным объектам
 public class SoundController : MonoBehaviour {
 
     float soundCooldown = 0;
@@ -23,7 +24,8 @@ public class SoundController : MonoBehaviour {
         if (soundCooldown > 0)
             return;
 
-        //FIX
+        //FIXME: Каждый вызов звука создается новый объект и после его отработки убивается сборщиком мусора
+        //       Это трата ресурсов. Так быть не должно!
         AudioClip ac = Resources.Load<AudioClip>("Sounds/Floor_OnCreated");
         AudioSource.PlayClipAtPoint(ac, Camera.main.transform.position);
 

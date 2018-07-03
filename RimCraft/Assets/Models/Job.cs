@@ -11,7 +11,7 @@ public class Job {
 
     public Tile tile { get; protected set; }
 
-    float jobTime = 1.0f; // время необходимое для выполнение работы
+    float jobTime = 1f; // время необходимое для выполнение работы
 
     //FIXME: временное решение связывающее экземпляр работы конкретно с фурнитурой. 
     //А хотелось бы чтобы работа могла быть связана с разными объектами
@@ -27,6 +27,7 @@ public class Job {
         this.tile = tile;
         this.jobObjectType = jobObjectType;
         this.cbJobComplete += cbJobComplete;
+        this.jobTime = jobTime;
     }
 
     public void DoWork(float workTime)
@@ -34,11 +35,10 @@ public class Job {
         jobTime -= workTime;
         if (jobTime <= 0)
         {
-            Debug.Log("Работа выполнена");
+            //Debug.Log("Работа выполнена");
             if (cbJobComplete != null)
             {
-                int len = cbJobComplete.GetInvocationList().Length;
-                Debug.Log("Выполняем методы-подписчики (количесвто: "+ len + " на "+ this);
+                //Выполняем методы которые подписались
                 cbJobComplete(this);
             }
         }
@@ -52,21 +52,21 @@ public class Job {
 
     public void RegisterJobCompleteCallback(Action<Job> cb)
     {
-        cbJobComplete += cbJobComplete;
+        cbJobComplete += cb;
     }
 
     public void UnregisterJobCompleteCallback(Action<Job> cb)
     {
-        cbJobComplete -= cbJobComplete;
+        cbJobComplete -= cb;
     }
 
     public void RegisterJobCancelCallback(Action<Job> cb)
     {
-        cbJobCancel += cbJobCancel;
+        cbJobCancel += cb;
     }
 
     public void UnregisterJobCancelCallback(Action<Job> cb)
     {
-        cbJobCancel -= cbJobCancel;
+        cbJobCancel -= cb;
     }
 }
