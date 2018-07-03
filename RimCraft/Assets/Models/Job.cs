@@ -34,8 +34,13 @@ public class Job {
         jobTime -= workTime;
         if (jobTime <= 0)
         {
+            Debug.Log("Работа выполнена");
             if (cbJobComplete != null)
+            {
+                int len = cbJobComplete.GetInvocationList().Length;
+                Debug.Log("Выполняем методы-подписчики (количесвто: "+ len + " на "+ this);
                 cbJobComplete(this);
+            }
         }
     }
 
