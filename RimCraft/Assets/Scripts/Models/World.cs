@@ -108,24 +108,29 @@ public class World {
 
         // Создаем временную карту для проведения тестов по поиску пути
 
-        int l = width / 2 - 5;
-        int h = height / 2 - 5;
+        int l = Width / 2 - 5;
+        int b = Height / 2 - 5;
 
         for (int x = l - 5; x < l + 15; x++)
         {
-            for (int y = h - 5; y < h + 15; y++)
+            for (int y = b - 5; y < b + 15; y++)
             {
                 tiles[x, y].Type = TileType.Floor;
 
-                if (x == 1 || x == (l+9) || y == h || y == (h+9))
+
+                if (x == l || x == (l + 9) || y == b || y == (b + 9))
                 {
-                    if (x != (l+9) && y != (h+4))
+                    if (x != (l + 9) && y != (b + 4))
                     {
                         PlaceFurniture("Wall", tiles[x, y]);
                     }
                 }
+
+
+
             }
         }
+
     }
 
     /// <summary>

@@ -22,6 +22,20 @@ public class Tile {
     //InstalledObject - объекты, которые стационано установлены (Мебель например)
     public Furniture furniture { get; protected set; }
 
+    public float movementCost
+    {
+        get
+        {
+            if (type == TileType.Empty)
+                return 0; // непроходим
+
+            if (furniture == null)
+                return 1;
+
+            return 1 * furniture.movementCost;
+        }
+    }
+
     public Job pendingFurnitureJob;
     
     public World world { get; protected set; } //Ссылка на мир
@@ -143,5 +157,43 @@ public class Tile {
         }
         return false;
         */
+    }
+
+    public Tile[] GetNeighbours(bool isDiagOkay = false)
+    {
+        Tile[] ns;
+
+        if (isDiagOkay == false)
+        {
+            ns = new Tile[4]; // Порядок такйлов: N E S W
+        } else
+        {
+            ns = new Tile[8]; // Порядок тайлов N E S W NE SE SW NW
+        }
+
+        Tile n;
+
+        n = world.GetTileAt(X, Y + 1);
+        ns[0] = n;
+        n = world.GetTileAt(X + 1, Y);
+        ns[1] = n;
+        n = world.GetTileAt(X, Y - 1);
+        ns[2] = n;
+        n = world.GetTileAt(X - 1, Y);
+        ns[3] = n;
+
+        if (isDiagOkay == true)
+        {
+            n = world.GetTileAt(X + 1, Y + 1);
+            ns[4] = n;
+            n = world.GetTileAt(X + 1, Y - 1);
+            ns[5] = n;
+            n = world.GetTileAt(X - 1, Y - 1);
+            ns[6] = n;
+            n = world.GetTileAt(X - 1, Y + 1);
+            ns[7] = n;
+        }
+
+        return ns;
     }
 }

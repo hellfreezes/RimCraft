@@ -100,7 +100,7 @@ public class TileSpriteController : MonoBehaviour {
 
         } else if (tile_data.Type == TileType.Empty)
         {
-            tile_go.GetComponent<SpriteRenderer>().sprite = null;
+            tile_go.GetComponent<SpriteRenderer>().sprite = emptySprite;
         } else
         {
             // Возвращаем ошибку если тип у тайла не зарегистрирован в TileType (разве это возможно?)

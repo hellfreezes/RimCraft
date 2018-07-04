@@ -13,7 +13,7 @@ public class Furniture {
     public string objectType { get; protected set; }
     // Цена перемещения через этот объект.
     // 0 тут означает, что через этот объект нельзя пройти
-    float movementCost = 1f;
+    public float movementCost { get; protected set; }
 
     // Размеры объекта в тайлах
     int width = 1;

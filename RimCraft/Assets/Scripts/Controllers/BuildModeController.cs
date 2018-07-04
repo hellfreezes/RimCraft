@@ -31,6 +31,15 @@ public class BuildModeController : MonoBehaviour {
         buildModeObjectType = objectType;
     }
 
+    // Метод для кнопки
+    // Генерирует тестовый мир
+    public void BuildPathfindingTestsWorld()
+    {
+        WorldController.Instance.world.SetupPathfindingExample();
+
+        Path_TileGraph tileGraph = new Path_TileGraph(WorldController.Instance.world);
+    }
+
     public void DoBuild(Tile t)
     {
         if (buildModeIsObjects == true)
