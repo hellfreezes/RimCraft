@@ -9,9 +9,10 @@ using UnityEngine;
 public class World {
     //Двумерная база данных класса
     Tile[,] tiles;
-
     // Список персонажей
     List<Character> characters;
+    // Карта мира для поиска пути
+    public Path_TileGraph tileGraph;
 
     Dictionary<string, Furniture> furniturePrototypes;
 
@@ -188,6 +189,7 @@ public class World {
         if (cbFurnitureCreated != null)
         {
             cbFurnitureCreated(obj);
+            InvalidateTileGraph();
         }
     }
 
@@ -221,6 +223,11 @@ public class World {
         cbTileChanged -= callback;
     }
 
+    /// <summary>
+    /// Вызывается всякий раз как происходит изменение файла
+    /// Это метод подписчик на событие
+    /// </summary>
+    /// <param name="t">Обновленный тайл</param>
     void OnTileChanged(Tile t)
     {
         if (cbTileChanged == null)
@@ -229,6 +236,15 @@ public class World {
         }
 
         cbTileChanged(t);
+
+        InvalidateTileGraph();
+    }
+
+    // Вызывается всякий раз кода происходит изменение мира
+    // в следствии чего карта пути становится неправильной
+    public void InvalidateTileGraph()
+    {
+        tileGraph = null;
     }
 
     public bool IsFurniturePlacmentVaild(string furnitureType, Tile t)
