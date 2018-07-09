@@ -24,6 +24,12 @@ public class JobSpriteController : MonoBehaviour {
 
         GameObject job_go = new GameObject();
 
+        if (jobGameObjectMap.ContainsKey(job))
+        {
+            Debug.LogError("Попытка создать работу, которая уже есть в списке. Вероятно работа была доавлена в очередь заново.");
+            return;
+        }
+
         //Добавляем связь GameObject и экземпляра в словарь
         jobGameObjectMap.Add(job, job_go);
         job_go.name = "JOB_" + job.jobObjectType + "_" + job.tile.X + "_" + job.tile.Y;

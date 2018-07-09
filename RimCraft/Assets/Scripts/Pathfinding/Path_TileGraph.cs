@@ -26,12 +26,12 @@ public class Path_TileGraph {
             {
                 Tile t = world.GetTileAt(x, y);
 
-                if (t.movementCost > 0)
-                {
+                //if (t.movementCost > 0)
+                //{
                     Path_Node<Tile> n = new Path_Node<Tile>();
                     n.data = t;
                     nodes.Add(t, n);
-                }
+                //}
             }
         }
 

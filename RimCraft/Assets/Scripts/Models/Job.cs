@@ -22,7 +22,7 @@ public class Job {
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
     Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
 
-    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime = 1f)
+    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime = 0.1f)
     {
         this.tile = tile;
         this.jobObjectType = jobObjectType;

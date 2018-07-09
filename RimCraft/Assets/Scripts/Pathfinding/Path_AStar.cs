@@ -19,9 +19,6 @@ public class Path_AStar {
         // Создаем перечень вершин
         Dictionary<Tile, Path_Node<Tile>> nodes = world.tileGraph.nodes;
 
-        Path_Node<Tile> start = nodes[tileStart];
-        Path_Node<Tile> goal = nodes[tileEnd];
-
         // Проверяем входит ли тайл отправления в перечень вершин.
         if (nodes.ContainsKey(tileStart) == false)
         {
@@ -34,6 +31,9 @@ public class Path_AStar {
             Debug.LogError("Конечный тайл не содержится в списке вершин карты поиска пути.");
             return;
         }
+
+        Path_Node<Tile> start = nodes[tileStart];
+        Path_Node<Tile> goal = nodes[tileEnd];
 
         // Создаем перечень вершин:
         // Проверенные и непригоные вершины
@@ -70,7 +70,9 @@ public class Path_AStar {
             //Достигли точки назначения
             if (current == goal)
             {
-                //TODO: вернуть путь
+                // Местоназначения достигнутл. Конвертируем результат в череду тайлов
+                // по которым надо пройтись чтобы попасть в финишную точку и выходим из метода
+                reconstruct_path(Came_From, current);
                 return;
             }
 
@@ -83,8 +85,9 @@ public class Path_AStar {
                 {
                     continue;
                 }
+                float movement_cost_to_neighbour = neighbour.data.movementCost * dist_between(current, neighbour);
 
-                float tentative_g_score = g_score[current] + dist_between(current, neighbour);
+                float tentative_g_score = g_score[current] + movement_cost_to_neighbour;
 
                 if (OpenSet.Contains(neighbour) && tentative_g_score >= g_score[neighbour])
                     continue;
@@ -120,6 +123,11 @@ public class Path_AStar {
             current = Came_From[current];
             total_path.Enqueue(current.data);
         }
+
+        // В данной точки наш total_path - это очередь тайлов идущая с конца
+        // С конечного тайла к начальному, нужно ее перевернуть
+
+        path = new Queue<Tile>(total_path.Reverse());
     }
 
     float heuristic_cost_estimate(Path_Node<Tile> a, Path_Node<Tile> b)
@@ -151,8 +159,15 @@ public class Path_AStar {
             );
     }
 
-    public Tile GetNextTile()
+    public Tile Dequeue()
     {
         return path.Dequeue();
+    }
+
+    public int Lenght()
+    {
+        if (path == null)
+            return 0;
+        return path.Count;
     }
 }
