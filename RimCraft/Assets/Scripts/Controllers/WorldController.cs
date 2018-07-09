@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /*
  * Класс юнити, управляющий нашим миром
@@ -26,11 +27,7 @@ public class WorldController : MonoBehaviour {
             Debug.LogError("На сцене больше одного экземпляра WorldController");
         instance = this;
 
-        //Create a world with empty Tiles
-        world = new World();
-
-        // Центруем камеру
-        Camera.main.transform.position = new Vector3(world.Width / 2, world.Height / 2, Camera.main.transform.position.z);
+        CreateEmptyWorld();
     }
 
     // Update is called once per frame
@@ -45,5 +42,34 @@ public class WorldController : MonoBehaviour {
         int y = Mathf.FloorToInt(coord.y);
 
         return world.GetTileAt(x, y);
+    }
+
+    void CreateEmptyWorld()
+    {
+        //Create a world with empty Tiles
+        world = new World();
+
+        // Центруем камеру
+        Camera.main.transform.position = new Vector3(world.Width / 2, world.Height / 2, Camera.main.transform.position.z);
+    }
+
+    public void NewWorld()
+    {
+        Debug.Log("Попытка создать новый мир");
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void SaveWorld()
+    {
+        Debug.Log("Попытка сохранить мир");
+    }
+
+    public void LoadWorld()
+    {
+        Debug.Log("Попытка загрузить мир");
+
+        // Перезагружаем сцену сначала. Чтобы уничтожить все ранее созданные данные
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

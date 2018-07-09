@@ -159,6 +159,11 @@ public class Tile {
         */
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="isDiagOkay">Можно ли совершать диагональные перемещения</param>
+    /// <returns></returns>
     public Tile[] GetNeighbours(bool isDiagOkay = false)
     {
         Tile[] ns;

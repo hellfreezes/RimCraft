@@ -58,6 +58,15 @@ public class Path_TileGraph {
                 {
                     // соседний тайл существует и он проходим
                     // надо создать грань к этому тайлу
+
+                    // но сначала проверим срезаем ли мы углы через непроходимые тайлы или не пытаемся ли мы пройти
+                    // подиагонали между двумя непроходимыми тайлами
+                    if (IsClippingCorner(t, neighbours[i]))
+                    {
+                        // Если это так, то не добавляем связь. Пропускам грань
+                        continue;
+                    }
+
                     Path_Edge<Tile> e = new Path_Edge<Tile>(); // новая грань
                     e.cost = neighbours[i].movementCost; // стоимость перемещения
                     e.node = nodes[neighbours[i]]; // обратная отсылка к текущей точке
@@ -75,4 +84,28 @@ public class Path_TileGraph {
 
     }
 	
+    bool IsClippingCorner(Tile curr, Tile neigh)
+    {
+        // Если переход от curr до neigh является диагональным
+        // Проверить не срезаем ли мы углы
+        if (Mathf.Abs(curr.X - neigh.X) + Mathf.Abs(curr.Y - neigh.Y) == 2)
+        {
+            //Тайлы смежные подиагонали
+            int dX = curr.X - neigh.X;
+            int dY = curr.Y - neigh.Y;
+
+            if (curr.world.GetTileAt(curr.X - dX, curr.Y).movementCost == 0)
+            {
+                //E или W непроходим, значит это будет срезание угла
+                return true;
+            }
+            if (curr.world.GetTileAt(curr.X, curr.Y - dY).movementCost == 0)
+            {
+                //S или N непроходим, значит это будет срезание угла
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
