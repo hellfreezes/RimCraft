@@ -9,6 +9,10 @@ using UnityEngine;
 // Это объекты, которые можно установить. Такие вещи например как: двери, стены, мебель и тп
 public class Furniture : IXmlSerializable {
 
+    float opennes = 0; // Доля открытия двери от 0 до 1
+    bool doorIsOpening = false; //
+    float doorOpenTime = 0.25f; // время для полного открытия/закрытия 
+
     // Ссылка на базовый тайл под объектом. Хотя объект может занимать больше чем 1 тайл
     public Tile tile { get; protected set; }
 
@@ -30,24 +34,37 @@ public class Furniture : IXmlSerializable {
 
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
+    public void Update(float deltaTime)
+    {
+
+    }
+
+    // Пустой контруктор нужен только для сериализация.
     public Furniture()
     {
 
     }
 
-    // Конструктор для создания прототипа
-    static public Furniture CreatePrototype(string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false)
+    // Конструктор который копирует прототип
+    public Furniture(Furniture other)
     {
-        Furniture obj = new Furniture();
-        obj.objectType = objectType;
-        obj.movementCost = movementCost;
-        obj.width = width;
-        obj.height = height;
-        obj.linksToNeighbour = linksToNeighbour;
+        this.objectType = other.objectType;
+        this.movementCost = other.movementCost;
+        this.width = other.width;
+        this.height = other.height;
+        this.linksToNeighbour = other.linksToNeighbour;
+    }
 
-        obj.funcPositionValidation = obj.__IsVaildPosition;
+    // Конструктор для создания прототипа из параметров. Применяется только в одном случае и только для создания прототипов
+    public Furniture (string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false)
+    {
+        this.objectType = objectType;
+        this.movementCost = movementCost;
+        this.width = width;
+        this.height = height;
+        this.linksToNeighbour = linksToNeighbour;
 
-        return obj;
+        this.funcPositionValidation = this.__IsVaildPosition;
     }
 
     static public Furniture PlaceInstance (Furniture proto, Tile tile)
@@ -58,13 +75,7 @@ public class Furniture : IXmlSerializable {
             return null;
         }
 
-        Furniture obj = new Furniture();
-
-        obj.objectType = proto.objectType;
-        obj.movementCost = proto.movementCost;
-        obj.width = proto.width;
-        obj.height = proto.height;
-        obj.linksToNeighbour = proto.linksToNeighbour;
+        Furniture obj = new Furniture(proto);
 
         obj.tile = tile;
 

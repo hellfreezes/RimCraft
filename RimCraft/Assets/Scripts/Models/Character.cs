@@ -212,12 +212,13 @@ public class Character : IXmlSerializable {
 
     public XmlSchema GetSchema()
     {
-        throw new NotImplementedException();
+        return null;
+        //throw new NotImplementedException();
     }
 
     public void ReadXml(XmlReader reader)
     {
-        throw new NotImplementedException();
+        //throw new NotImplementedException();
     }
 
     public void WriteXml(XmlWriter writer)

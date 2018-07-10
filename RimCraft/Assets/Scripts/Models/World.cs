@@ -110,10 +110,14 @@ public class World : IXmlSerializable {
 
     void CreateFurniturePrototype()
     {
+        /* Необходимо заменить этот метод на метод, который будет брать данные о прототипах из XML файлов */
+
         furniturePrototypes = new Dictionary<string, Furniture>();
 
-        Furniture wallPrototype = Furniture.CreatePrototype("Wall", 0, 1, 1, true);
+        Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true);
         furniturePrototypes.Add("Wall", wallPrototype);
+        Furniture doorPrototype = new Furniture("Door", 0, 1, 1, true);
+        furniturePrototypes.Add("Door", doorPrototype);
     }
 
 
@@ -319,7 +323,7 @@ public class World : IXmlSerializable {
                 case "Furnitures": // Доходя до секции Фурнитуры, вызываем:
                     ReadXml_Furnitures(reader);
                     break;
-                case "Character": // Доходя до секции Фурнитуры, вызываем:
+                case "Characters": // Доходя до секции Фурнитуры, вызываем:
                     ReadXml_Characters(reader);
                     break;
             }
