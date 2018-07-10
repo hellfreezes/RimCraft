@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 using UnityEngine;
 
 // Это объекты, которые можно установить. Такие вещи например как: двери, стены, мебель и тп
-public class Furniture {
+public class Furniture : IXmlSerializable {
 
     // Ссылка на базовый тайл под объектом. Хотя объект может занимать больше чем 1 тайл
     public Tile tile { get; protected set; }
@@ -27,7 +30,7 @@ public class Furniture {
 
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
-    protected Furniture()
+    public Furniture()
     {
 
     }
@@ -80,22 +83,22 @@ public class Furniture {
 
             Tile t;
             t = tile.world.GetTileAt(x, y - 1);
-            if (t != null && t.furniture != null && t.furniture.objectType == obj.objectType)
+            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
             t = tile.world.GetTileAt(x - 1, y);
-            if (t != null && t.furniture != null && t.furniture.objectType == obj.objectType)
+            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
             t = tile.world.GetTileAt(x, y + 1);
-            if (t != null && t.furniture != null && t.furniture.objectType == obj.objectType)
+            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
             t = tile.world.GetTileAt(x + 1, y);
-            if (t != null && t.furniture != null && t.furniture.objectType == obj.objectType)
+            if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
@@ -143,5 +146,30 @@ public class Furniture {
         // Проверка на наличие пары стен N/S или W/E
 
         return true;
+    }
+
+    /* ********************************************************
+     * 
+     *             Методы для Сохранения/Загрузки
+     * 
+     * ********************************************************/
+
+    public XmlSchema GetSchema()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        //Все остальное читается в World
+        movementCost = float.Parse(reader.GetAttribute("MovementCost"));
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        writer.WriteAttributeString("X", tile.X.ToString());
+        writer.WriteAttributeString("Y", tile.Y.ToString());
+        writer.WriteAttributeString("ObjectType", objectType);
+        writer.WriteAttributeString("MovementCost", movementCost.ToString());
     }
 }

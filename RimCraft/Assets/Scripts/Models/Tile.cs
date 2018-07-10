@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 using UnityEngine;
 
 
@@ -12,7 +15,7 @@ public enum TileType { Empty, Floor };
  * Будет содержать информацию о поверхности, ссылться на строения или вещи, хранить качество окружающей
  * среды
  */
-public class Tile {
+public class Tile : IXmlSerializable {
     TileType type = TileType.Empty;
     // Делегат хранящий в себе методы принимающие аргумент Tile
     Action<Tile> cbTileChanged;
@@ -200,5 +203,32 @@ public class Tile {
         }
 
         return ns;
+    }
+
+
+    /* ********************************************************
+     * 
+     *             Методы для Сохранения/Загрузки
+     * 
+     * ********************************************************/
+
+
+    public XmlSchema GetSchema()
+    {
+        return null;
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        // Мы не читаем координаты тайла. Т.к. они сохраняются в момент его создания
+        // А к этому моменту тайл создан. За его создание отвечает World
+        Type = (TileType)int.Parse(reader.GetAttribute("Type"));
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        writer.WriteAttributeString("X", x.ToString());
+        writer.WriteAttributeString("Y", y.ToString());
+        writer.WriteAttributeString("Type", ((int)Type).ToString());
     }
 }

@@ -21,11 +21,11 @@ public class CharacterSpriteController : MonoBehaviour {
 
         world.RegisterCharacterCreated(OnCharacterCreated);
 
-
-        //DEBUG - Временно запускаю ТУТ
-        Character c = world.CreateCharacter(world.GetTileAt(world.Width / 2, world.Height / 2));
-
-        //c.SetDestination(world.GetTileAt(world.Width / 2 + 5, world.Height / 2));
+        //Проверить может есть существующе персонажи. Если что вызвать коллбэк
+        foreach (Character c in world.characters)
+        {
+            OnCharacterCreated(c);
+        }
     }
 
     void LoadSprites()

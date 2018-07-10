@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 using UnityEngine;
 
 /// <summary>
 /// Класс контролирующий персонажей
 /// </summary>
-public class Character {
+public class Character : IXmlSerializable {
 
     public float X {
         get
@@ -33,6 +36,12 @@ public class Character {
     float speed = 4f;
 
     Action<Character> cbOnCharacterChanged;
+
+    //Пустой для сериализации
+    public Character()
+    {
+
+    }
 
 
     // Конструктор
@@ -193,5 +202,27 @@ public class Character {
     public void UnregisterOnCharacterChangedCallback(Action<Character> callback)
     {
         cbOnCharacterChanged -= callback;
+    }
+
+    /* ********************************************************
+     * 
+     *             Методы для Сохранения/Загрузки
+     * 
+     * ********************************************************/
+
+    public XmlSchema GetSchema()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        writer.WriteAttributeString("X", currTile.X.ToString());
+        writer.WriteAttributeString("Y", currTile.Y.ToString());
     }
 }

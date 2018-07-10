@@ -43,6 +43,7 @@ public class TileSpriteController : MonoBehaviour {
                 SpriteRenderer spriteRenderer = tile_go.AddComponent<SpriteRenderer>();
                 spriteRenderer.sprite = emptySprite;
 
+                OnTileChanged(tile_data);
                 // tile_data.RegisterTileTypeChangeCallBack((tile) => { OnTileTypeChanged(tile, tile_go); }); // Старый вариант без использования tileGameObjectMap
 
                 // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 

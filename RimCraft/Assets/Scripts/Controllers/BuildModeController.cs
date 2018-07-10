@@ -37,7 +37,7 @@ public class BuildModeController : MonoBehaviour {
     {
         WorldController.Instance.world.SetupPathfindingExample();
 
-        Path_TileGraph tileGraph = new Path_TileGraph(WorldController.Instance.world);
+        //Path_TileGraph tileGraph = new Path_TileGraph(WorldController.Instance.world);
     }
 
     public void DoBuild(Tile t)

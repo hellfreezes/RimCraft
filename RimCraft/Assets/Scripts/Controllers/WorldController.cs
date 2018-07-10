@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Xml.Serialization;
+using System.IO;
 
 /*
  * Класс юнити, управляющий нашим миром
@@ -11,6 +13,8 @@ public class WorldController : MonoBehaviour {
     public static WorldController instance;
 
     public World world { get; protected set; }
+
+    static bool loadWorld = false;
 
     public static WorldController Instance
     {
@@ -27,7 +31,15 @@ public class WorldController : MonoBehaviour {
             Debug.LogError("На сцене больше одного экземпляра WorldController");
         instance = this;
 
-        CreateEmptyWorld();
+        if (loadWorld)
+        {
+            loadWorld = false;
+            CreateWorldFromSaveFile();
+        }
+        else
+        {
+            CreateEmptyWorld();
+        }
     }
 
     // Update is called once per frame
@@ -47,7 +59,20 @@ public class WorldController : MonoBehaviour {
     void CreateEmptyWorld()
     {
         //Create a world with empty Tiles
-        world = new World();
+        world = new World(100, 100);
+
+        // Центруем камеру
+        Camera.main.transform.position = new Vector3(world.Width / 2, world.Height / 2, Camera.main.transform.position.z);
+    }
+
+    void CreateWorldFromSaveFile()
+    {
+        Debug.Log("Попытка создать мир из файла");
+        //Create a world from a savefile
+        XmlSerializer serializer = new XmlSerializer(typeof(World));
+        TextReader reader = new StringReader(PlayerPrefs.GetString("SaveGame00"));
+        world = (World)serializer.Deserialize(reader);
+        reader.Close();
 
         // Центруем камеру
         Camera.main.transform.position = new Vector3(world.Width / 2, world.Height / 2, Camera.main.transform.position.z);
@@ -63,13 +88,24 @@ public class WorldController : MonoBehaviour {
     public void SaveWorld()
     {
         Debug.Log("Попытка сохранить мир");
+
+        XmlSerializer serializer = new XmlSerializer(typeof(World));
+        TextWriter writer = new StringWriter();
+        serializer.Serialize(writer, world);
+        writer.Close();
+
+        //Debug.Log("Результат сериализации: \n" + writer.ToString());
+
+        PlayerPrefs.SetString("SaveGame00", writer.ToString());
     }
 
     public void LoadWorld()
     {
         Debug.Log("Попытка загрузить мир");
-
+        loadWorld = true;
         // Перезагружаем сцену сначала. Чтобы уничтожить все ранее созданные данные
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+
+    
 }
