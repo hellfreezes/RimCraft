@@ -28,7 +28,7 @@ public class Furniture : IXmlSerializable {
     int height = 1;
     public bool linksToNeighbour { get; protected set; }
 
-    Action<Furniture> cbOnChanged;
+    public Action<Furniture> cbOnChanged;
 
     // Накопитель функций для проверки возможности установки фурнитуры
     Func<Tile, bool> funcPositionValidation;

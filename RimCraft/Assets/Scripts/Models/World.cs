@@ -124,10 +124,10 @@ public class World : IXmlSerializable {
         Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false);
         furniturePrototypes.Add("Door", doorPrototype);
 
-        furniturePrototypes["Door"].furnParameters["openess"] = 0f;
-        furniturePrototypes["Door"].furnParameters["is_opening"] = 0f;
-        furniturePrototypes["Door"].updateActions += FurnitureActions.Door_UpdateAction;
-        furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable;
+        furniturePrototypes["Door"].furnParameters["openness"] = 0f; // кастомный параметр
+        furniturePrototypes["Door"].furnParameters["is_opening"] = 0f; // кастомный параметр
+        furniturePrototypes["Door"].updateActions += FurnitureActions.Door_UpdateAction; // кастомный метод
+        furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
     }
 
 

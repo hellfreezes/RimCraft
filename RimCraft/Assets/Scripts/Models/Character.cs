@@ -73,13 +73,11 @@ public class Character : IXmlSerializable {
 
         // Проверяем есть ли у нас цель куда идти
         // Мы наместе?
-        if (currTile == destTile) // Мы достигли цели
-        //if (pathAStar != null && pathAStar.Lenght() == 1) // Мы рядом с местом работы (в смежном тайле)
-        {   
-            if (myJob != null) //И у нас есть работа
-            {
+        //if (currTile == destTile) // Мы достигли цели
+        if (myJob != null && currTile == myJob.tile) // Мы достигли цели
+                                  //if (pathAStar != null && pathAStar.Lenght() == 1) // Мы рядом с местом работы (в смежном тайле)
+        {
                 myJob.DoWork(deltaTime);
-            }
         }
     }
 

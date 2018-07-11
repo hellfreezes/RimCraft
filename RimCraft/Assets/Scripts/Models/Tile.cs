@@ -28,6 +28,8 @@ public class Tile : IXmlSerializable {
     //InstalledObject - объекты, которые стационано установлены (Мебель например)
     public Furniture furniture { get; protected set; }
 
+    const float BaseTileMovementCost = 1; // FIXME: поправить. Этот параметр временный
+
     /// <summary>
     /// Возвращает цену прохода с учетом стоящей в ней фурнитуры
     /// </summary>
@@ -39,9 +41,9 @@ public class Tile : IXmlSerializable {
                 return 0; // непроходим
 
             if (furniture == null)
-                return 1;
+                return BaseTileMovementCost;
 
-            return 1 * furniture.movementCost;
+            return BaseTileMovementCost * furniture.movementCost;
         }
     }
 

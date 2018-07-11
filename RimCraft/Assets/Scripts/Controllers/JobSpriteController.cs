@@ -39,9 +39,27 @@ public class JobSpriteController : MonoBehaviour {
 
         SpriteRenderer spriteRenderer = job_go.AddComponent<SpriteRenderer>();
 
+        //Тут создается спрайт для предпросмотра того, что будет построено.
         spriteRenderer.sprite = fsc.GetSpriteForFurniture(job.jobObjectType);
         spriteRenderer.sortingLayerName = "Furniture";
         spriteRenderer.color = new Color(0.5f, 1f, 0.5f, 0.25f);
+        //FIXME: Hardcode ... полный ппипец ниже
+        //FIXME: Hardcoding - поворот двери точно должен быть не тут
+        if (job.jobObjectType == "Door")
+        {
+            // По умолчанию дверь между EW
+            // Проверить если дверь между стен SN, то повернуть на 90гр
+            Tile northTile = job.tile.world.GetTileAt(job.tile.X, job.tile.Y + 1);
+            Tile southTile = job.tile.world.GetTileAt(job.tile.X, job.tile.Y - 1);
+
+            if (northTile != null && southTile != null &&
+                northTile.furniture != null && southTile.furniture != null &&
+                northTile.furniture.objectType == "Wall" && southTile.furniture.objectType == "Wall")
+            {
+                job_go.transform.rotation = Quaternion.Euler(0, 0, 90);
+                job_go.transform.Translate(1f, 0, 0, Space.World); // Не ну это капец! Так нельзя! :)
+            }
+        }
 
         job.RegisterJobCompleteCallback(OnJobEnded);
         job.RegisterJobCancelCallback(OnJobEnded);
