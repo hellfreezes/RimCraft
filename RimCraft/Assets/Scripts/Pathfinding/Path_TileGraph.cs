@@ -35,7 +35,7 @@ public class Path_TileGraph {
             }
         }
 
-        Debug.Log("Path_TileGraph: Создано " + nodes.Count + " вершин.");
+        // Debug.Log("Path_TileGraph: Создано " + nodes.Count + " вершин.");
 
         // Пройтись по всем вершинам опять
         // и создаем грани - связи с соседними вершинами
@@ -80,7 +80,7 @@ public class Path_TileGraph {
 
         }
 
-        Debug.Log("Path_TileGraph: Создано " + edgeCount + " граней.");
+        // Debug.Log("Path_TileGraph: Создано " + edgeCount + " граней.");
 
     }
 	

@@ -9,9 +9,10 @@ using UnityEngine;
 // Это объекты, которые можно установить. Такие вещи например как: двери, стены, мебель и тп
 public class Furniture : IXmlSerializable {
 
-    float opennes = 0; // Доля открытия двери от 0 до 1
-    bool doorIsOpening = false; //
-    float doorOpenTime = 0.25f; // время для полного открытия/закрытия 
+    public Dictionary<string, float> furnParameters; // Кастомные параметры фурнитуры
+    public Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
+
+    public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
 
     // Ссылка на базовый тайл под объектом. Хотя объект может занимать больше чем 1 тайл
     public Tile tile { get; protected set; }
@@ -34,30 +35,49 @@ public class Furniture : IXmlSerializable {
 
     //TODO: пока не умеем вращать объекты перед установкой. А также не умеем ставить объекты на несколько тайлов
 
+    // Функция обновления вызывается каждый тик
     public void Update(float deltaTime)
     {
-
+        //Обновляем все загруженные в эту фурнитуру действия (точнее наверное обновляем все ее кастомные параметры furnParametrs)
+        if (updateActions != null)
+        {
+            updateActions(this, deltaTime);
+        }
     }
 
     // Пустой контруктор нужен только для сериализация.
     public Furniture()
     {
-
+        furnParameters = new Dictionary<string, float>();
     }
 
     // Конструктор который копирует прототип
-    public Furniture(Furniture other)
+    protected Furniture(Furniture other)
     {
         this.objectType = other.objectType;
         this.movementCost = other.movementCost;
         this.width = other.width;
         this.height = other.height;
         this.linksToNeighbour = other.linksToNeighbour;
+
+       // Перенимаем кастомные параметры и методы
+        this.furnParameters = new Dictionary<string, float>(other.furnParameters);
+        if (other.updateActions != null)
+            this.updateActions = (Action<Furniture, float>)other.updateActions.Clone();
+        if (other.isEnterable != null)
+            this.isEnterable = (Func<Furniture, Enterablylity>)other.isEnterable.Clone();
+    }
+
+    public virtual Furniture Clone()
+    {
+        return new Furniture(this);
     }
 
     // Конструктор для создания прототипа из параметров. Применяется только в одном случае и только для создания прототипов
     public Furniture (string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false)
     {
+        this.furnParameters = new Dictionary<string, float>();
+
         this.objectType = objectType;
         this.movementCost = movementCost;
         this.width = width;
@@ -75,7 +95,7 @@ public class Furniture : IXmlSerializable {
             return null;
         }
 
-        Furniture obj = new Furniture(proto);
+        Furniture obj = proto.Clone();
 
         obj.tile = tile;
 
@@ -87,6 +107,7 @@ public class Furniture : IXmlSerializable {
             return null;
         }
 
+        // Уведомляем соседние тайлы об установки в этот тайл фурнитуры. (Если у нее есть зависимость от соседей)
         if (obj.linksToNeighbour)
         {
             int x = tile.X;
@@ -173,7 +194,20 @@ public class Furniture : IXmlSerializable {
     public void ReadXml(XmlReader reader)
     {
         //Все остальное читается в World
-        movementCost = float.Parse(reader.GetAttribute("MovementCost"));
+        //movementCost = float.Parse(reader.GetAttribute("MovementCost"));
+
+        if (reader.ReadToDescendant("Param"))
+        {
+            do
+            {
+                string k = reader.GetAttribute("name");
+                float v = float.Parse(reader.GetAttribute("value"));
+
+                furnParameters[k] = v;
+
+
+            } while (reader.ReadToNextSibling("Param"));
+        }
     }
 
     public void WriteXml(XmlWriter writer)
@@ -181,6 +215,14 @@ public class Furniture : IXmlSerializable {
         writer.WriteAttributeString("X", tile.X.ToString());
         writer.WriteAttributeString("Y", tile.Y.ToString());
         writer.WriteAttributeString("ObjectType", objectType);
-        writer.WriteAttributeString("MovementCost", movementCost.ToString());
+        //writer.WriteAttributeString("MovementCost", movementCost.ToString());
+
+        foreach (string k in furnParameters.Keys)
+        {
+            writer.WriteStartElement("Param");
+            writer.WriteAttributeString("name", k);
+            writer.WriteAttributeString("value", furnParameters[k].ToString());
+            writer.WriteEndElement();
+        }
     }
 }

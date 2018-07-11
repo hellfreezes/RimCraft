@@ -10,6 +10,9 @@ using UnityEngine;
 // Базовый тип тайла. Первый слой - поверхность
 public enum TileType { Empty, Floor };
 
+// Возможность войти в тайл
+public enum Enterablylity { Yes, Never, Soon};
+
 /* 
  * Tile - класс независимы от движка Unity. Хранит в себе информацию о клетке из которых состоит мир.
  * Будет содержать информацию о поверхности, ссылться на строения или вещи, хранить качество окружающей
@@ -25,6 +28,9 @@ public class Tile : IXmlSerializable {
     //InstalledObject - объекты, которые стационано установлены (Мебель например)
     public Furniture furniture { get; protected set; }
 
+    /// <summary>
+    /// Возвращает цену прохода с учетом стоящей в ней фурнитуры
+    /// </summary>
     public float movementCost
     {
         get
@@ -163,10 +169,10 @@ public class Tile : IXmlSerializable {
     }
 
     /// <summary>
-    /// 
+    /// Вчисляем все соседние с текущим тайлы
     /// </summary>
     /// <param name="isDiagOkay">Можно ли совершать диагональные перемещения</param>
-    /// <returns></returns>
+    /// <returns>Возвращает массив из тайлов. 4 или 8 элементов в зависимости от возможности диагонального прохода</returns>
     public Tile[] GetNeighbours(bool isDiagOkay = false)
     {
         Tile[] ns;
@@ -203,6 +209,28 @@ public class Tile : IXmlSerializable {
         }
 
         return ns;
+    }
+
+    /// <summary>
+    /// Проверка условий входа. Учитывается проходимость тайла как такового. Так и проходимость фурнитуры.
+    /// Можно пройти, никогда нельзя пройти, можно пройти позже
+    /// </summary>
+    /// <returns>Enterablylity - объявлен в классе Tile. См какие он может принимать значения. Т.к. я буду его расширять</returns>
+    public Enterablylity IsEnterable()
+    {
+        if (movementCost == 0) // Вход невозможен, т.к. тайл непроходим. Всё что дальше неважно.
+            return Enterablylity.Never;
+
+        // Проверить специальные флаги на возможность входа
+        // Проверяем есть ли фурнитура в этом тайле и есть ли у фурнитуры специальные методы контролирующие вход
+        if (furniture != null && furniture.isEnterable != null)
+        {
+            // Если есть, то спрашиваем у фурнитуры как через нее пройти
+            return furniture.isEnterable(furniture);
+        }
+
+        // Поумолчанию через тайл можно пройти без условий
+        return Enterablylity.Yes;
     }
 
 
