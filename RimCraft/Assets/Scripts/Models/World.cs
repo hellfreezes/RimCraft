@@ -17,6 +17,7 @@ public class World : IXmlSerializable {
     // Список персонажей
     public List<Character> characters;
     public List<Furniture> furnitures;
+    public List<Room>      rooms;
 
     // Карта мира для поиска пути
     public Path_TileGraph tileGraph;
@@ -86,6 +87,7 @@ public class World : IXmlSerializable {
 
         furnitures = new List<Furniture>();
         characters = new List<Character>();
+        rooms = new List<Room>();
     }
 
     public void Update(float deltaTime)
@@ -119,11 +121,11 @@ public class World : IXmlSerializable {
 
         furniturePrototypes = new Dictionary<string, Furniture>();
 
-        Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true);
+        Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
         furniturePrototypes.Add("Wall", wallPrototype);
+
         Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false);
         furniturePrototypes.Add("Door", doorPrototype);
-
         furniturePrototypes["Door"].furnParameters["openness"] = 0f; // кастомный параметр
         furniturePrototypes["Door"].furnParameters["is_opening"] = 0f; // кастомный параметр
         furniturePrototypes["Door"].updateActions += FurnitureActions.Door_UpdateAction; // кастомный метод
@@ -217,10 +219,23 @@ public class World : IXmlSerializable {
         // Добавляем созданную фурнитуру в лист фурнитур
         furnitures.Add(furn);
 
+        // Вероятно надо вычислить образование комнат
+        if (furn.roomEnclouser)
+        {
+            Room.DoRoomFloodFill(furn);
+        }
+
         if (cbFurnitureCreated != null)
         {
             cbFurnitureCreated(furn);
-            InvalidateTileGraph();
+
+            if (furn.movementCost != 1)
+            {
+                // Если фурнитура является проходимой, то она никак не повлияет на карту пути
+                // Поэтому можно не обновлять карту 
+                // FIXME: не уверен на счет условия. Надо перепроверить на практике!
+                InvalidateTileGraph(); // Перестраивает карту поиска пути
+            }
         }
 
         return furn;

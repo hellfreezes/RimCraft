@@ -23,6 +23,8 @@ public class Furniture : IXmlSerializable {
     // 0 тут означает, что через этот объект нельзя пройти
     public float movementCost { get; protected set; }
 
+    public bool roomEnclouser { get; protected set; }
+
     // Размеры объекта в тайлах
     int width = 1;
     int height = 1;
@@ -56,6 +58,7 @@ public class Furniture : IXmlSerializable {
     {
         this.objectType = other.objectType;
         this.movementCost = other.movementCost;
+        this.roomEnclouser = other.roomEnclouser;
         this.width = other.width;
         this.height = other.height;
         this.linksToNeighbour = other.linksToNeighbour;
@@ -73,13 +76,23 @@ public class Furniture : IXmlSerializable {
         return new Furniture(this);
     }
 
-    // Конструктор для создания прототипа из параметров. Применяется только в одном случае и только для создания прототипов
-    public Furniture (string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false)
+    /// <summary>
+    /// Конструктор для создания прототипа из параметров. Применяется только в одном случае и только для создания прототипов.
+    /// Для установки фурнитуры надо использовать Конструктор клонирования прототипов
+    /// </summary>
+    /// <param name="objectType">Строковое имя</param>
+    /// <param name="movementCost">Стоимость прохода через</param>
+    /// <param name="width">Ширина в кол-ве тайлов</param>
+    /// <param name="height">Длина в кол-ве тайлов</param>
+    /// <param name="linksToNeighbour">Зависит ли графика от соседних тайлов</param>
+    /// <param name="roomEnclouser">Может ли закрывать периметр, образуя комнаты</param>
+    public Furniture (string objectType, float movementCost = 1f, int width = 1, int height = 1, bool linksToNeighbour = false, bool roomEnclouser = false)
     {
         this.furnParameters = new Dictionary<string, float>();
 
         this.objectType = objectType;
         this.movementCost = movementCost;
+        this.roomEnclouser = roomEnclouser;
         this.width = width;
         this.height = height;
         this.linksToNeighbour = linksToNeighbour;
