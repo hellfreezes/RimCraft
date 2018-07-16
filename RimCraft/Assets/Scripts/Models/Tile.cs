@@ -19,15 +19,15 @@ public enum Enterablylity { Yes, Never, Soon};
  * среды
  */
 public class Tile : IXmlSerializable {
-    public Room room;
-
     TileType type = TileType.Empty;
-    
     // Делегат хранящий в себе методы принимающие аргумент Tile
     Action<Tile> cbTileChanged;
 
     //LooseObject - объекты, которые можно переносить
     Inventory inventory;
+
+    public Room room;
+
     //InstalledObject - объекты, которые стационано установлены (Мебель например)
     public Furniture furniture { get; protected set; }
 
@@ -236,6 +236,26 @@ public class Tile : IXmlSerializable {
 
         // Поумолчанию через тайл можно пройти без условий
         return Enterablylity.Yes;
+    }
+
+    public Tile North()
+    {
+        return world.GetTileAt(x, y + 1);
+    }
+
+    public Tile South()
+    {
+        return world.GetTileAt(x, y - 1);
+    }
+
+    public Tile West()
+    {
+        return world.GetTileAt(x - 1, y);
+    }
+
+    public Tile East()
+    {
+        return world.GetTileAt(x + 1, y);
     }
 
 

@@ -61,22 +61,29 @@ public class World : IXmlSerializable {
         CreateCharacter(GetTileAt(Width / 2, Height / 2));
     }
 
-    // Возвращает улицу
     public Room GetOutsideRoom()
     {
         return rooms[0];
     }
 
+    /// <summary>
+    /// Удаляет комнату, но только не дефолтную
+    /// </summary>
+    /// <param name="r"></param>
     public void DeleteRoom(Room r)
     {
         if (r == GetOutsideRoom())
         {
-            Debug.LogError("Попытка удалить внешнее пространство (дефолтную комнату)");
+            Debug.LogError("Попытка удалить дефолтную комнату");
             return;
         }
-
         r.UnAssignAllTiles();
         rooms.Remove(r);
+    }
+
+    public void AddRoom(Room r)
+    {
+        rooms.Add(r);
     }
 
     void SetupWorld(int width, int height)
@@ -90,7 +97,7 @@ public class World : IXmlSerializable {
         tiles = new Tile[width, height];
 
         rooms = new List<Room>();
-        rooms.Add(new Room()); //Первая комната - это просто открытое пространство
+        rooms.Add(new Room()); // улица - внешнее пространство
 
         //Заполняется новыми тайлами
         for (int x = 0; x < width; x++)
@@ -99,7 +106,8 @@ public class World : IXmlSerializable {
             {
                 tiles[x, y] = new Tile(this, x, y);
                 tiles[x, y].RegisterTileTypeChangeCallBack(OnTileChanged);
-                tiles[x, y].room = GetOutsideRoom(); // room0 - это дефолтная комната. Она всегда есть и это открытое пространство
+
+                tiles[x, y].room = GetOutsideRoom(); // комната по умолчанию - внешнее пространство
             }
         }
 
