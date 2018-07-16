@@ -19,7 +19,10 @@ public enum Enterablylity { Yes, Never, Soon};
  * среды
  */
 public class Tile : IXmlSerializable {
+    public Room room;
+
     TileType type = TileType.Empty;
+    
     // Делегат хранящий в себе методы принимающие аргумент Tile
     Action<Tile> cbTileChanged;
 
