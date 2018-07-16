@@ -114,6 +114,11 @@ public class Room {
             return;
         }
 
+        if (tile.Type == TileType.Empty)
+        {
+            return;
+        }
+
         // Если добались до сюда, значит нам нужно создать новую комнату
         Room newRoom = new Room();
 
@@ -137,7 +142,18 @@ public class Room {
 
                 foreach (Tile t2 in ns)
                 {
-                    if (t2 != null && t2.room != oldRoom && t2.furniture == null || t2.furniture.roomEnclouser == false)
+                    if (t2 == null || t2.Type == TileType.Empty)
+                    {
+                        // Соседний тайл оказался частью открытого пространства.
+                        // Нужно вернуть всё назад (назначив всем тайлам newRoom ссылку на улицу)
+                        // И удалить newRoom
+                        newRoom.UnAssignAllTiles();
+                        return;
+                    }
+
+                    // Сосед существует и не является пустым (частью открытого пространства).
+                    // Надо проверить не является ли он частью предыдущей комнаты и не содержит ли он закрывающий комнату объект (такой как стена)
+                    if (t2.room != oldRoom && (t2.furniture == null || t2.furniture.roomEnclouser == false))
                     {
                         tilesToCheck.Enqueue(t2);
                     }
