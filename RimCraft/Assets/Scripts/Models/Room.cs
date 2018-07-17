@@ -101,8 +101,7 @@ public class Room {
 
         if (tile.room != oldRoom)
         {
-            // Тайл уже принадлежит какой-то комнате, значит комната не закрыта
-            // Нет смысла продолжать. Комната не образована
+            // Тайл, который мы проверяем уже обрабатывается, ему уже назначена какая-то комната
             return;
         }
 
@@ -147,19 +146,26 @@ public class Room {
                         // Соседний тайл оказался частью открытого пространства.
                         // Нужно вернуть всё назад (назначив всем тайлам newRoom ссылку на улицу)
                         // И удалить newRoom
+
                         newRoom.UnAssignAllTiles();
                         return;
                     }
 
                     // Сосед существует и не является пустым (частью открытого пространства).
-                    // Надо проверить не является ли он частью предыдущей комнаты и не содержит ли он закрывающий комнату объект (такой как стена)
-                    if (t2.room != oldRoom && (t2.furniture == null || t2.furniture.roomEnclouser == false))
+                    // Не включает тайлы, которые мы уже проверяли и назначили им новую комнату,
+                    // тайлы, которые содержат объекты способные образоывать комнаты
+                    if (t2.room != newRoom && (t2.furniture == null || t2.furniture.roomEnclouser == false))
                     {
                         tilesToCheck.Enqueue(t2);
                     }
                 }
             }
         }
+
+        //Копируем состояние комнаты из предыдущей комнаты
+        newRoom.atmosCO2    = oldRoom.atmosCO2;
+        newRoom.atmosN      = oldRoom.atmosN;
+        newRoom.atmosO2     = oldRoom.atmosO2;
 
         tile.world.AddRoom(newRoom);
 

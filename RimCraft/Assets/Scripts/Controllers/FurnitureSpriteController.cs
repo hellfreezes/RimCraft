@@ -110,16 +110,16 @@ public class FurnitureSpriteController : MonoBehaviour {
             // Проверяем если это дверь, на сколько она открыта и меняем спрайт соотвественно
             if (furn.objectType == "Door")
             {
-                if (furn.furnParameters["openness"] < 0.1f)
+                if (furn.GetParameter("openness") < 0.1f)
                 {
                     //дверь закрыта
                     spriteName = "Door";
                 }
-                else if (furn.furnParameters["openness"] < 0.5f)
+                else if (furn.GetParameter("openness") < 0.5f)
                 {
                     spriteName = "Door_openness_1";
                 }
-                else if (furn.furnParameters["openness"] < 0.9f)
+                else if (furn.GetParameter("openness") < 0.9f)
                 {
                     spriteName = "Door_openness_2";
                 }

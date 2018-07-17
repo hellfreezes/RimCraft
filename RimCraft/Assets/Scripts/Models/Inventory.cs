@@ -6,5 +6,12 @@ using UnityEngine;
 // также вероятно неустановленные объекты
 public class Inventory {
 
+    public string objectType = "Steel Plate";
 
+    public int maxStackSize = 50;
+    public int stackSize = 1;
+
+    // Инвентарь содержится либо в тайле либо у персонажа в рюкзаке
+    public Tile tile;
+    public Character cha;
 }

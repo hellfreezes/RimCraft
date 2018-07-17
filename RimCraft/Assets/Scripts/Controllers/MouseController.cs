@@ -22,7 +22,24 @@ public class MouseController : MonoBehaviour {
         dragPreviewGameObjects = new List<GameObject>();
         buildModeController = buildModeControllerGO.GetComponent<BuildModeController>();
 	}
+
+    /// <summary>
+    /// Получаем координаты мыши в мире
+    /// </summary>
+    public Vector3 GetMousePosition()
+    {
+        return currFramePosition;
+    }
+
+    public Tile GetMouseOverTile()
+    {
+        return WorldController.Instance.world.GetTileAt(
+            Mathf.FloorToInt(currFramePosition.x), 
+            Mathf.FloorToInt(currFramePosition.y));
+    }
 	
+
+
 	// Update is called once per frame
 	void Update () {
         //Текущее положение мыши относительно мира

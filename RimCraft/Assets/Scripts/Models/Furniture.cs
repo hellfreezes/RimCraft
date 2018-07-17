@@ -9,8 +9,19 @@ using UnityEngine;
 // Это объекты, которые можно установить. Такие вещи например как: двери, стены, мебель и тп
 public class Furniture : IXmlSerializable {
 
-    public Dictionary<string, float> furnParameters; // Кастомные параметры фурнитуры
-    public Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
+    /// <summary>
+    /// Словарь содержащий кастомные параметры (float) упорядоченных по ключевой строке (string)
+    /// Для получение кастомного параметра необходимо знать ключ (string).
+    /// Создано чтобы в дальнейшем грузить кастомные параметры из LUA текстовых файлов
+    /// </summary>
+    protected Dictionary<string, float> furnParameters; // Кастомные параметры фурнитуры
+
+    /// <summary>
+    /// Перечень этих методов исполняется для фурнитуры каждый апдейт
+    /// В данном случае float - это deltaTime.
+    /// В вызываемом методе могут быть использованы параметры из словаря furnParameters
+    /// </summary>
+    protected Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
 
     public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
 
@@ -53,7 +64,8 @@ public class Furniture : IXmlSerializable {
         furnParameters = new Dictionary<string, float>();
     }
 
-    // Конструктор который копирует прототип
+    // Конструктор который копирует прототип - не использовать напрямую, если не используются субклассы
+    // Вместо него нужно использовать Clone
     protected Furniture(Furniture other)
     {
         this.objectType = other.objectType;
@@ -97,7 +109,7 @@ public class Furniture : IXmlSerializable {
         this.height = height;
         this.linksToNeighbour = linksToNeighbour;
 
-        this.funcPositionValidation = this.__IsVaildPosition;
+        this.funcPositionValidation = this.DEFAULT__IsVaildPosition;
     }
 
     static public Furniture PlaceInstance (Furniture proto, Tile tile)
@@ -167,7 +179,11 @@ public class Furniture : IXmlSerializable {
         return funcPositionValidation(tile);
     }
 
-    public bool __IsVaildPosition(Tile tile)
+    /// <summary>
+    /// Метод должен быть заменен скриптом LUA, подгружаемым для каждого вида фурнитуры
+    /// отдельно из текстового файла.
+    /// </summary>\
+    protected bool DEFAULT__IsVaildPosition(Tile tile)
     {
         // Проверяет можно ли ипользовать тайл для установки фурнитуры
         if (tile.Type != TileType.Floor)
@@ -184,14 +200,14 @@ public class Furniture : IXmlSerializable {
         return true;
     }
 
-    public bool __IsVaildPositionForDoor(Tile tile)
-    {
-        if (__IsVaildPosition(tile) == false)
-            return false;
-        // Проверка на наличие пары стен N/S или W/E
+    //public bool __IsVaildPositionForDoor(Tile tile)
+    //{
+    //    if (__IsVaildPosition(tile) == false)
+    //        return false;
+    //    // Проверка на наличие пары стен N/S или W/E
 
-        return true;
-    }
+    //    return true;
+    //}
 
     /* ********************************************************
      * 
@@ -237,5 +253,47 @@ public class Furniture : IXmlSerializable {
             writer.WriteAttributeString("value", furnParameters[k].ToString());
             writer.WriteEndElement();
         }
+    }
+
+
+    /// <summary>
+    /// Получает кастомный параметр из словаря параметров по ключевой строке
+    /// </summary>
+    /// <param name="key">ключевая строка</param>
+    /// <param name="default_value">значение которое будет возвращено если ключевой строки не найдено в словаре</param>
+    /// <returns></returns>
+    public float GetParameter(string key, float default_value = 0)
+    {
+        if (furnParameters.ContainsKey(key) == false)
+            return default_value;
+        return furnParameters[key];
+    }
+
+    public void SetParameter(string key, float value)
+    {
+        furnParameters[key] = value;
+    }
+
+    public void ChangeParameter(string key, float value)
+    {
+        if (furnParameters.ContainsKey(key) == false)
+            furnParameters[key] = value;
+
+        furnParameters[key] += value;
+    }
+
+    /// <summary>
+    /// Регистрирует метод для фурнитуры, который будет вызываться каждый апдейт
+    /// Нужно будет изменить такой способ регистрации метода, когда будем использовать LUA
+    /// </summary>
+    /// <param name="a"></param>
+    public void RegisterUpdateAction(Action<Furniture, float> a)
+    {
+        updateActions += a;
+    }
+
+    public void UnregisterUpdateAction(Action<Furniture, float> a)
+    {
+        updateActions -= a;
     }
 }

@@ -127,6 +127,45 @@ public class Tile : IXmlSerializable {
         return true;
     }
 
+    public bool PlaceInvenory(Inventory inv)
+    {
+        if (inv == null)
+        {
+            inventory = null;
+            return true;
+        }
+
+        if (inventory != null)
+        {
+            // В тайле уже есть какой то предмет. Может можно стакать предмет?
+            if (inventory.objectType != inv.objectType)
+            {
+                Debug.Log("Попытка назначить инвентарь в тайл в котором уже есть инвентарь другова типа");
+                return false;
+            }
+
+            int numToMove = inv.stackSize;
+            if (inventory.stackSize + numToMove > inventory.maxStackSize)
+            {
+                numToMove = inventory.maxStackSize - inventory.stackSize;
+            }
+
+            inventory.stackSize += numToMove;
+            inv.stackSize -= numToMove;
+
+            return true;
+        }
+
+        // Слот под инвентарь в тайле свободен. Но положить в него новый инвентарь напрямую мы не можем
+        // Нужно задействовать InventoryManager. Нужно дать знать предыдущему месту хранения предмета
+        // о том убыл ли стак предмета полностью (и удалить его) либо только частично (и удалить лишь, то что убыло)
+
+        inventory = inv.Clone();
+
+
+        return true;
+    }
+
     // вернет истину если передаваемый тайл является соседним текущему
     public bool IsNeighbour(Tile tile, bool diagOkay = false)
     {

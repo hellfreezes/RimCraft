@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Код этого класса нужно перевести полностью на LUA код. Чтобы потом закгружать его на лету в работающую программу
+// и главное - дать возможность писать аддоны к игре
+
 public static class FurnitureActions {
 
     // Обновлялка двери, вызывается каждый тик
@@ -10,21 +13,21 @@ public static class FurnitureActions {
         float openSpeed = 4;
 
         // Открывается ли дверь?
-        if (furn.furnParameters["is_opening"] >= 1)
+        if (furn.GetParameter("is_opening") >= 1)
         {
 
             // Выполняем открытие
-            furn.furnParameters["openness"] += deltaTime * openSpeed;
-            if (furn.furnParameters["openness"] >= 1)
+            furn.ChangeParameter("openness", deltaTime * openSpeed);
+            if (furn.GetParameter("openness") >= 1)
             {
                 // Дверь открыта, нужно закрыть
-                furn.furnParameters["is_opening"] = 0;
+                furn.SetParameter("is_opening",  0);
             }
         } else // Иначе нужно закрыть дверь
         {
-            furn.furnParameters["openness"] -= deltaTime * openSpeed;
+            furn.ChangeParameter("openness", -deltaTime * openSpeed);
         }
-        furn.furnParameters["openness"] = Mathf.Clamp01(furn.furnParameters["openness"]);
+        furn.SetParameter("openness", Mathf.Clamp01(furn.GetParameter("openness")));
 
         furn.cbOnChanged(furn);
     }
@@ -33,9 +36,9 @@ public static class FurnitureActions {
     public static Enterablylity Door_IsEnterable(Furniture furn)
     {
         // Можно зайти или нет зависит от того, открыта ли дверь полностью
-        furn.furnParameters["is_opening"] = 1;
+        furn.SetParameter("is_opening", 1);
 
-        if (furn.furnParameters["openness"] >= 1)
+        if (furn.GetParameter("openness") >= 1)
         {
             return Enterablylity.Yes; // Зайти можно
         }

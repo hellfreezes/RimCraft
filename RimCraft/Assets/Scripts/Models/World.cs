@@ -18,6 +18,7 @@ public class World : IXmlSerializable {
     public List<Character> characters;
     public List<Furniture> furnitures;
     public List<Room>      rooms;
+    public InventoryManager inventoryManager;
 
     // Карта мира для поиска пути
     public Path_TileGraph tileGraph;
@@ -51,6 +52,13 @@ public class World : IXmlSerializable {
         }
     }
     // Конец доутспа к аргументам
+
+
+    // Этот конструктор применяется только для Сериализации
+    public World()
+    {
+        // Пустой конструктор
+    }
 
     public World(int width, int height)
     {
@@ -115,8 +123,9 @@ public class World : IXmlSerializable {
 
         CreateFurniturePrototype();
 
-        furnitures = new List<Furniture>();
-        characters = new List<Character>();
+        furnitures  = new List<Furniture>();
+        characters  = new List<Character>();
+        inventoryManager = new InventoryManager();
     }
 
     public void Update(float deltaTime)
@@ -153,11 +162,11 @@ public class World : IXmlSerializable {
         Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
         furniturePrototypes.Add("Wall", wallPrototype);
 
-        Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false);
+        Furniture doorPrototype = new Furniture("Door", 1, 1, 1, true);
         furniturePrototypes.Add("Door", doorPrototype);
-        furniturePrototypes["Door"].furnParameters["openness"] = 0f; // кастомный параметр
-        furniturePrototypes["Door"].furnParameters["is_opening"] = 0f; // кастомный параметр
-        furniturePrototypes["Door"].updateActions += FurnitureActions.Door_UpdateAction; // кастомный метод
+        furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр
+        furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
+        furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
         furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
     }
 
@@ -340,17 +349,13 @@ public class World : IXmlSerializable {
         return furniturePrototypes[objectType];
     }
 
+    
+
     /* ********************************************************
      * 
      *             Методы для Сохранения/Загрузки
      * 
      * ********************************************************/
-
-    public World()
-    {
-        
-    }
-
     // Реализация интерфейса IXmlSerializable
 
     public XmlSchema GetSchema()
@@ -383,6 +388,11 @@ public class World : IXmlSerializable {
                     break;
             }
         }
+        //DEBUG - УДАЛИТЬ
+        // Создаем предмет инвентаря чисто для тестов
+        Inventory inv = new Inventory();
+        
+
         Debug.Log("Мир загружен за " + (Time.time - startTime).ToString() + " секунд.");
     }
 
