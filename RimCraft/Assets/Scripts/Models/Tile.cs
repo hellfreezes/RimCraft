@@ -24,7 +24,7 @@ public class Tile : IXmlSerializable {
     Action<Tile> cbTileChanged;
 
     //LooseObject - объекты, которые можно переносить
-    Inventory inventory;
+    public Inventory inventory { get; protected set; }
 
     public Room room;
 
@@ -161,6 +161,7 @@ public class Tile : IXmlSerializable {
         // о том убыл ли стак предмета полностью (и удалить его) либо только частично (и удалить лишь, то что убыло)
 
         inventory = inv.Clone();
+        inv.stackSize = 0;
 
 
         return true;

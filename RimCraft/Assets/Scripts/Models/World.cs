@@ -35,6 +35,7 @@ public class World : IXmlSerializable {
     Action<Furniture> cbFurnitureCreated;
     Action<Tile> cbTileChanged;
     Action<Character> cbCharacterCreated;
+    Action<Inventory> cbInventoryCreated;
 
     // Доступ к аргументам
     public int Width
@@ -162,7 +163,7 @@ public class World : IXmlSerializable {
         Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
         furniturePrototypes.Add("Wall", wallPrototype);
 
-        Furniture doorPrototype = new Furniture("Door", 1, 1, 1, true);
+        Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
         furniturePrototypes.Add("Door", doorPrototype);
         furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр
         furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
@@ -289,6 +290,16 @@ public class World : IXmlSerializable {
         cbCharacterCreated -= callback;
     }
 
+    public void RegisterInventoryCreated(Action<Inventory> callback)
+    {
+        cbInventoryCreated += callback;
+    }
+
+    public void UnregisterInventoryCreated(Action<Inventory> callback)
+    {
+        cbInventoryCreated -= callback;
+    }
+
     public void RegisterFurnitureCreated(Action<Furniture> callback)
     {
         cbFurnitureCreated += callback;
@@ -391,7 +402,7 @@ public class World : IXmlSerializable {
         //DEBUG - УДАЛИТЬ
         // Создаем предмет инвентаря чисто для тестов
         Inventory inv = new Inventory();
-        
+        inventoryManager.PlaceInventory(GetTileAt(Width / 2, Height / 2), inv);
 
         Debug.Log("Мир загружен за " + (Time.time - startTime).ToString() + " секунд.");
     }

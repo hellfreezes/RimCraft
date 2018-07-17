@@ -37,6 +37,7 @@ public class FurnitureSpriteController : MonoBehaviour {
         foreach (Sprite s in sprites)
         {
             furnitureSprites.Add(s.name, s);
+            //Debug.Log(s.name + " : " + s);
         }
     }
 

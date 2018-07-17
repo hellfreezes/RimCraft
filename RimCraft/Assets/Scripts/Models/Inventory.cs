@@ -14,4 +14,21 @@ public class Inventory {
     // Инвентарь содержится либо в тайле либо у персонажа в рюкзаке
     public Tile tile;
     public Character cha;
+
+    public Inventory()
+    {
+        
+    }
+
+    protected Inventory (Inventory other)
+    {
+        objectType = other.objectType;
+        maxStackSize = other.maxStackSize;
+        stackSize = other.stackSize;
+    }
+
+    public virtual Inventory Clone()
+    {
+        return new Inventory(this);
+    }
 }
