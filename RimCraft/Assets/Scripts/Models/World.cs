@@ -402,7 +402,24 @@ public class World : IXmlSerializable {
         //DEBUG - УДАЛИТЬ
         // Создаем предмет инвентаря чисто для тестов
         Inventory inv = new Inventory();
-        inventoryManager.PlaceInventory(GetTileAt(Width / 2, Height / 2), inv);
+        inv.stackSize = 10;
+        Tile t = GetTileAt(Width / 2, Height / 2);
+        inventoryManager.PlaceInventory(t, inv);
+
+        inv = new Inventory();
+        inv.stackSize = 18;
+        t = GetTileAt(Width / 2 - 2, Height / 2 - 3);
+        inventoryManager.PlaceInventory(t, inv);
+
+        inv = new Inventory();
+        inv.stackSize = 45;
+        t = GetTileAt(Width / 2 + 2, Height / 2 - 3);
+        inventoryManager.PlaceInventory(t, inv);
+
+        if (cbInventoryCreated != null)
+        {
+            cbInventoryCreated(inv);
+        }
 
         Debug.Log("Мир загружен за " + (Time.time - startTime).ToString() + " секунд.");
     }

@@ -33,9 +33,9 @@ public class MouseController : MonoBehaviour {
 
     public Tile GetMouseOverTile()
     {
-        return WorldController.Instance.world.GetTileAt(
-            Mathf.FloorToInt(currFramePosition.x), 
-            Mathf.FloorToInt(currFramePosition.y));
+        return WorldController.Instance.GetTileAtWorldCoord(currFramePosition);
+            //Mathf.FloorToInt(currFramePosition.x), 
+            //Mathf.FloorToInt(currFramePosition.y));
     }
 	
 
@@ -72,10 +72,10 @@ public class MouseController : MonoBehaviour {
         }
 
         // Координаты начала перетаскивания и конца перетаскивания (из них строится прямоугольная область)
-        int start_x = Mathf.FloorToInt(dragStartPosition.x);
-        int end_x = Mathf.FloorToInt(currFramePosition.x);
-        int start_y = Mathf.FloorToInt(dragStartPosition.y);
-        int end_y = Mathf.FloorToInt(currFramePosition.y);
+        int start_x = Mathf.FloorToInt(dragStartPosition.x + 0.5f);
+        int end_x = Mathf.FloorToInt(currFramePosition.x + 0.5f);
+        int start_y = Mathf.FloorToInt(dragStartPosition.y + 0.5f);
+        int end_y = Mathf.FloorToInt(currFramePosition.y + 0.5f);
 
         // Если конечный x меньше начального, то меняем их значения местами 
         if (end_x < start_x)

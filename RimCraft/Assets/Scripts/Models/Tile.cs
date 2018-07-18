@@ -161,7 +161,8 @@ public class Tile : IXmlSerializable {
         // о том убыл ли стак предмета полностью (и удалить его) либо только частично (и удалить лишь, то что убыло)
 
         inventory = inv.Clone();
-        inv.stackSize = 0;
+        inv.tile = this;
+        //inv.stackSize = 0;
 
 
         return true;

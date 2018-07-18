@@ -57,7 +57,7 @@ public class JobSpriteController : MonoBehaviour {
                 northTile.furniture.objectType == "Wall" && southTile.furniture.objectType == "Wall")
             {
                 job_go.transform.rotation = Quaternion.Euler(0, 0, 90);
-                job_go.transform.Translate(1f, 0, 0, Space.World); // Не ну это капец! Так нельзя! :)
+                //job_go.transform.Translate(1f, 0, 0, Space.World); // Не ну это капец! Так нельзя! :)
             }
         }
 

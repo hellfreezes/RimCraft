@@ -41,7 +41,7 @@ public class InventoryManager {
             {
                 inventories[tile.inventory.objectType] = new List<Inventory>();
             } 
-            inventories[tile.inventory.objectType].Add(tile.inventory);
+            inventories[tile.inventory.objectType].Add(inv);
         }
 
 

@@ -1,14 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InventorySpriteController : MonoBehaviour {
+    [SerializeField]
+    private GameObject inventoryUIPrefab;
 
     private Dictionary<Inventory, GameObject> inventoryGameObjectMap;
-
     private Dictionary<string, Sprite> inventorySprites;
 
-    World world
+    private World world
     {
         get { return WorldController.Instance.world; }
     }
@@ -17,66 +19,80 @@ public class InventorySpriteController : MonoBehaviour {
     {
         LoadSprites();
 
-        inventoryGameObjectMap = new Dictionary<Character, GameObject>();
+        inventoryGameObjectMap = new Dictionary<Inventory, GameObject>();
 
-        world.RegisterCharacterCreated(OnCharacterCreated);
+        world.RegisterInventoryCreated(OnInventoryCreated);
 
-        //Проверить может есть существующе персонажи. Если что вызвать коллбэк
-        foreach (Character c in world.characters)
+        //Проверить может есть существующе объекты. Если что вызвать коллбэк
+        foreach (string objectType in world.inventoryManager.inventories.Keys)
         {
-            OnCharacterCreated(c);
+            foreach (Inventory inv in world.inventoryManager.inventories[objectType])
+            {
+                OnInventoryCreated(inv);
+            }
         }
     }
 
     void LoadSprites()
     {
         inventorySprites = new Dictionary<string, Sprite>();
-        Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Characters/");
+        Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Inventory/");
         foreach (Sprite s in sprites)
         {
             inventorySprites.Add(s.name, s);
         }
     }
 
-    // Подписчик на событие в World, которое происходит когда фурнитура создается
-    void OnCharacterCreated(Character character)
+    // Подписчик на событие в World, которое происходит объект создается
+    void OnInventoryCreated(Inventory inv)
     {
-        //Debug.Log("OnInstalledObjectCreated");
+        //Debug.Log("OnInventoryCreated");
         //FIXME: не учитывает возможность находится на нескольких тайлах
 
         // Визуальная часть создания нового объекта
         // Объект создан. Пора назначить ему GameObject
 
-        GameObject obj_go = new GameObject();
+        GameObject inv_go = new GameObject();
 
         //Добавляем связь GameObject и экземпляра в словарь
-        inventoryGameObjectMap.Add(character, obj_go);
-        obj_go.name = "Character";
-        obj_go.transform.position = new Vector3(character.X, character.Y, 0);
-        //obj_go.transform.SetParent(this.transform, true);
+        inventoryGameObjectMap.Add(inv, inv_go);
+        inv_go.name = inv.objectType;
+        inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0);
+        inv_go.transform.SetParent(this.transform, true);
 
-        SpriteRenderer spriteRenderer = obj_go.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = inventorySprites["p1_front"];
-        spriteRenderer.sortingLayerName = "Character";
+        SpriteRenderer spriteRenderer = inv_go.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = inventorySprites[inv.objectType];
+        spriteRenderer.sortingLayerName = "Inventory";
 
-        // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 
-        // Если событие изменения происходит в tile_data, то вызывается метод OnTileTypeChanged
-        character.RegisterOnCharacterChangedCallback(OnCharacterChanged);
+        if (inv.stackSize > 1)
+        {
+            // Стак. Надо отобразить количество предметов в стаке
+            GameObject ui_go = GameObject.Instantiate(inventoryUIPrefab);
+            ui_go.transform.SetParent(inv_go.transform);
+            ui_go.transform.localPosition = Vector3.zero;
+            ui_go.GetComponentInChildren<Text>().text = inv.stackSize.ToString();
+            
+        }
+
+        //Добавить позднее:
+        //inv.RegisterOnCharacterChangedCallback(OnCharacterChanged);
     }
 
     // Подписчик на событие в Furniture, которое вызывается когда что либо в фурнитуре меняется
-    void OnCharacterChanged(Character character)
+    void OnInventoryChanged(Inventory inv)
     {
+        // Доработать! и задей
+
         // Меняем графику если это необходимо
-        if (inventoryGameObjectMap.ContainsKey(character) == false)
+        if (inventoryGameObjectMap.ContainsKey(inv) == false)
         {
-            Debug.LogError("Попытка изменить игровой объект персонажа которого нет в словаре");
+            Debug.LogError("Попытка изменить игровой объект которого нет в словаре");
             return;
         }
 
-        GameObject char_go = inventoryGameObjectMap[character];
+        GameObject inv_go = inventoryGameObjectMap[inv];
 
 
-        char_go.transform.position = new Vector3(character.X, character.Y, 0f);
+        inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0f);
     }
 }

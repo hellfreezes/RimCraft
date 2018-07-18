@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: e76728ee25a7f7e4a94c46a1aedbe333
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: 0xA000-Squareish-Mono
+  fontNames:
+  - 0xA000-Squareish-Mono
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 7fa674f79d980e74fbf90447c3b8829b, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
