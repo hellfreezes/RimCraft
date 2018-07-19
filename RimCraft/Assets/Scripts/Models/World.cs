@@ -24,6 +24,7 @@ public class World : IXmlSerializable {
     public Path_TileGraph tileGraph;
 
     Dictionary<string, Furniture> furniturePrototypes;
+    public Dictionary<string, Job> furnitureJobPrototypes;
 
     // Ширина мира в кол-ве тайлов
     int width;
@@ -159,9 +160,12 @@ public class World : IXmlSerializable {
         /* Необходимо заменить этот метод на метод, который будет брать данные о прототипах из XML файлов */
 
         furniturePrototypes = new Dictionary<string, Furniture>();
+        furnitureJobPrototypes = new Dictionary<string, Job>();
+
 
         Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
         furniturePrototypes.Add("Wall", wallPrototype);
+        furnitureJobPrototypes.Add("Wall", new Job(null, "Wall", FurnitureActions.JobComlete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) }));
 
         Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
         furniturePrototypes.Add("Door", doorPrototype);

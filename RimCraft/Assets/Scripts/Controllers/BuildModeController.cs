@@ -59,11 +59,22 @@ public class BuildModeController : MonoBehaviour {
                 //Тайл пригоден к установки задания на работу
                 // Добавляем работу по установки фурнитуры в очередь
 
-                Job j = new Job(t, furnitureType, (theJob) =>
+                Job j;
+
+                if (WorldController.Instance.world.furnitureJobPrototypes.ContainsKey(furnitureType))
                 {
-                    WorldController.Instance.world.PlaceFurniture(furnitureType, theJob.tile);
-                    t.pendingFurnitureJob = null;
-                });
+                    // Тут необходимо клонировать прототип
+                    j = WorldController.Instance.world.furnitureJobPrototypes[furnitureType].Clone();
+                    // Прототип не имеет тайла указывающего где работа, надо назначить!
+                    j.tile = t;
+                }
+                else
+                {
+                    Debug.LogError("Не задан прототип работы для создаваемой фурнитуры: "+ furnitureType+". Применен дефолтный прототип.");
+                    j = new Job(t, furnitureType, FurnitureActions.JobComlete_FurnitureBuilding,
+                    0.1f,
+                    null);
+                }
 
                 // FIXME: Это ручной способ. Надо чтобы всё происходило автоматически
                 t.pendingFurnitureJob = j;

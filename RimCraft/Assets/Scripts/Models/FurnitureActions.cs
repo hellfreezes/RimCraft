@@ -44,4 +44,11 @@ public static class FurnitureActions {
         }
         return Enterablylity.Soon; // Подождите дверь открывается
     }
+
+
+    public static void JobComlete_FurnitureBuilding(Job theJob)
+    {
+        WorldController.Instance.world.PlaceFurniture(theJob.jobObjectType, theJob.tile);
+        theJob.tile.pendingFurnitureJob = null;
+    }
 }

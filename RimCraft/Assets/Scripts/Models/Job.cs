@@ -9,7 +9,7 @@ using UnityEngine;
 public class Job {
     //Пока делаем чтобы установка фурнитуры совершалась по средствам этого класса
 
-    public Tile tile { get; protected set; }
+    public Tile tile;
 
     float jobTime = 1f; // время необходимое для выполнение работы
 
@@ -22,12 +22,47 @@ public class Job {
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
     Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
 
-    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime = 0.1f)
+    Dictionary<string, Inventory> jobInventoryRequirements; // Необходимые для работы материалы
+
+
+    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] jobInventoryRequirements)
     {
         this.tile = tile;
         this.jobObjectType = jobObjectType;
         this.cbJobComplete += cbJobComplete;
         this.jobTime = jobTime;
+
+        this.jobInventoryRequirements = new Dictionary<string, Inventory>();
+        if (jobInventoryRequirements != null)
+        {
+            foreach (Inventory inv in jobInventoryRequirements)
+            {
+                this.jobInventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
+            }
+        }
+
+    }
+
+    protected Job(Job other)
+    {
+        this.tile = other.tile;
+        this.jobObjectType = other.jobObjectType;
+        this.cbJobComplete = other.cbJobComplete;
+        this.jobTime = other.jobTime;
+
+        this.jobInventoryRequirements = new Dictionary<string, Inventory>();
+        if (other.jobInventoryRequirements != null)
+        {
+            foreach (Inventory inv in other.jobInventoryRequirements.Values)
+            {
+                this.jobInventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
+            }
+        }
+    }
+
+    public virtual Job Clone()
+    {
+        return new Job(this);
     }
 
     public void DoWork(float workTime)
