@@ -27,11 +27,25 @@ public class Character : IXmlSerializable {
 
     public Tile currTile { get; protected set; }  // место в котором персонаж находимся
     Tile nextTile;  // Следующий тайл в череде тайлов до тайла назначения
-    Tile destTile;  // Место в которое движется персонаж. Если мы не двигаемся то curr=dest
+                    // Место в которое движется персонаж. Если мы не двигаемся то curr=dest
+
+    private Tile _destTile;
+    public Tile destTile
+    {
+        get { return _destTile; }
+        set {
+            if (_destTile != value)
+            {
+                _destTile = value;
+                pathAStar = null; // Если произошла смена точки назначения, то путь нуждается в перестройке
+            }
+        }
+    }
     Path_AStar pathAStar; // система поиска пути для персонажа
     
     float movementProcentage;
     Job myJob; // Задание над которым работает персонаж
+    public Inventory inventory; //Предмето, который несет персонаж (это не то, что надето и не то, во что экипирован персонаж)
 
     float speed = 4f;
 
@@ -50,39 +64,162 @@ public class Character : IXmlSerializable {
         currTile = destTile = nextTile = tile;
     }
 
+    void GetNewJob()
+    {
+        myJob = currTile.world.jobQueue.Dequeue();
+
+        if (myJob == null)
+            return;
+
+        destTile = myJob.tile;
+        //Подписываем метод OnJobEnded на указанные ниже события происходящие в Job
+        myJob.RegisterJobCompleteCallback(OnJobEnded);
+        myJob.RegisterJobCancelCallback(OnJobEnded);
+
+        // Тутже проверяем возможно ли добраться до тайла в котором находится эта работа
+        // Возможно персонаж не пойдет в место работы сразу (возможно нужно еще захватить материал)
+        // Но проверить возможно ли дойти до места работы всё же необходимо.
+
+
+        pathAStar = new Path_AStar(currTile.world, currTile, destTile);
+        if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
+        {
+            Debug.LogError("До пункта назначения (до работы) нет пути");
+            //Надо бы отменить работу тут
+            AbandonJob(); // Надо бы вернуть работу обратно в очередь
+            destTile = currTile;
+        }
+    }
+
     void Update_DoJob(float deltaTime)
     {
         // Есть ли у нас задание
         if (myJob == null)
         { //Персонаж свободен. У него нет работы
             // Значит взять работу из очереди работ
-            myJob = currTile.world.jobQueue.Dequeue();
-            if (myJob != null) // Если эта новая работа существует то,
+            GetNewJob();
+
+            if (myJob == null) // Если эта новая работа НЕсуществует то,
             {
-                // TODO: Проверить а можем ли мы добраться до места работы
-
-                //Получить работу
-                destTile = myJob.tile;
-                //Подписываем метод OnJobEnded на указанные ниже события происходящие в Job
-
-                //myJob.RegisterJobCompleteCallback(OnJobEnded);
-                myJob.RegisterJobCompleteCallback(OnJobEnded);
-                myJob.RegisterJobCancelCallback(OnJobEnded);
+                // Для персонажа нет работы. Выходим из метода
+                destTile = currTile;
+                return;
             }
         }
 
+        //В этой точке у нас есть работа и до нее есть путь
+
+        /*
+         * 1. Хватает ли для это работы материала у персонажа?
+         */
+        if (myJob.HasAllMaterial() == false)
+        {
+            // У нас недостаточно какого то материала
+            /* 2. Есть ли у персонажа необходимое для работы
+             */
+            if (inventory != null)
+            {
+                if (myJob.DesiresInventoryType(inventory) > 0)
+                {
+                    // Если да. То несем это в место работы и кладем в тайл с работой
+                    if (currTile == destTile)
+                    {
+                        // Мы в месте работы, поэтому складываем переносимый материал в место работы
+                        currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
+                        // Переносит ли персонаж чтонибудь?
+                        if (inventory.stackSize == 0)
+                        { // Перонаж положил всё в тайл с работой. У него больше ничего нет. Обнуляем инвентарь
+                            inventory = null;
+                        }
+                        else
+                        {
+                            // Персонаж принес больше чем нужно было
+                            // Остатки остались у персонажа
+                            Debug.LogError("Персонаж всё еще что-то держит, так быть не должно. Пока обнуляем его инвентарь. Но это означает, что проиходит утечка предметов. Предмемты удалены безвозвратно. ИСПРАВИТЬ!!!");
+                            inventory = null;
+                        }
+                    }
+                    else
+                    {
+                        // Всё еще идем в место работы
+                        destTile = myJob.tile;
+                        return;
+                    }
+                }
+                else
+                {
+                    // Персонаж держит какой то предмет, но для работы он не нужен
+                    // Надо бросить этот предмет.
+                    // TODO: найти ближайший свободный тайл и бросить предмет туда
+                    if (currTile.world.inventoryManager.PlaceInventory(currTile, inventory) == false)
+                    {
+                        Debug.LogError("Персонаж попробовать положить предмет в неправильный тайл");
+                        //FIXME: следующая строка приведет к потере предмета
+                        inventory = null;
+                    }
+                }
+            }
+            else
+            {
+                // Персонаж ничего не держит.
+
+                // Находимся ли мы в тайле который содержит необходимые материалы для работы
+                if (currTile.inventory != null && myJob.DesiresInventoryType(currTile.inventory) > 0)
+                { // Если персонаж в тайле, который содержит нужный материал, то поднять его
+                    // Поднять предметы
+
+                    currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory, myJob.DesiresInventoryType(currTile.inventory));
+
+                }
+                else
+                {
+
+                    // Работе не хватает материалов. Но у персонажа их нет.
+
+                    Inventory desired = myJob.GetFirstDesiredInventory();
+
+                    // FIXME: временное решение. Примитивно
+                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize);
+
+                    if (supplier == null)
+                    { // На сцене нет нужного предмета для данной работы
+                        Debug.Log(desired.objectType + " не найдено ни в одном тайле");
+                        AbandonJob(); // Отказываемся от этой работы
+                        return;
+                    }
+
+                    // Идем в тайл в котором лежит нужный материал
+                    // destTile = <тайл с нужным материалом>
+                    destTile = supplier.tile;
+                    return;
+                }
+            }
+            return; // Пока необходимый материал не будет лежать в месте работы, дальше по методу двигаться нельзя
+        }
+
+        // Если персонаж достиг этой точки то,
+        // Для работы есть весь необходимый материал
+        // Убедимся, что тайл места назначения - это тайл с работой
+        destTile = myJob.tile;
+
         // Проверяем есть ли у нас цель куда идти
         // Мы наместе?
-        //if (currTile == destTile) // Мы достигли цели
-        if (myJob != null && currTile == myJob.tile) // Мы достигли цели
-                                  //if (pathAStar != null && pathAStar.Lenght() == 1) // Мы рядом с местом работы (в смежном тайле)
+        if (currTile == myJob.tile) // Мы достигли цели
+        // Мы рядом с местом работы (в смежном тайле)
         {
-                myJob.DoWork(deltaTime);
+            // Мы рядом с работой. Вызывается функция которая отсчитывает таймер работы 
+            // и в конце вызывает завершающий метод
+            myJob.DoWork(deltaTime);
         }
+
+        // Update_DoMovement
     }
 
     void Update_DoMovement(float deltaTime)
     {
+        //if (destTile == null)
+        //    return;
+
         if (currTile == destTile)
         {// Мы никуда не движимся
             pathAStar = null;
@@ -106,7 +243,6 @@ public class Character : IXmlSerializable {
                     Debug.LogError("До пункта назначения нет пути");
                     //Надо бы отменить работу тут
                     AbandonJob(); // Надо бы вернуть работу обратно в очередь
-                    pathAStar = null;
                     return;
                 }
 

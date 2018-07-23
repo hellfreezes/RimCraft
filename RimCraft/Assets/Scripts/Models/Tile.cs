@@ -21,10 +21,10 @@ public enum Enterablylity { Yes, Never, Soon};
 public class Tile : IXmlSerializable {
     TileType type = TileType.Empty;
     // Делегат хранящий в себе методы принимающие аргумент Tile
-    Action<Tile> cbTileChanged;
+    public Action<Tile> cbTileChanged;
 
     //LooseObject - объекты, которые можно переносить
-    public Inventory inventory { get; protected set; }
+    public Inventory inventory;
 
     public Room room;
 

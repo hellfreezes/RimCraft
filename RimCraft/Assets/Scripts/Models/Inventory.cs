@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,11 +10,28 @@ public class Inventory {
     public string objectType = "Steel Plate";
 
     public int maxStackSize = 50;
-    public int stackSize = 1;
+    protected int _stackSize = 1;
+    public int stackSize {
+        get { return _stackSize; }
+        set
+        {
+            if (_stackSize != value)
+            {
+                _stackSize = value;
+
+                if (cbInventoryChanged != null)
+                {
+                    cbInventoryChanged(this);
+                }
+            }
+        }
+    }
+
+    Action<Inventory> cbInventoryChanged;
 
     // Инвентарь содержится либо в тайле либо у персонажа в рюкзаке
     public Tile tile;
-    public Character cha;
+    public Character character;
 
     public Inventory()
     {
@@ -37,5 +55,14 @@ public class Inventory {
     public virtual Inventory Clone()
     {
         return new Inventory(this);
+    }
+
+    public void RegisterChangeCallback(Action<Inventory> callback)
+    {
+        cbInventoryChanged += callback;
+    }
+    public void UnregisterChangeCallback(Action<Inventory> callback)
+    {
+        cbInventoryChanged -= callback;
     }
 }

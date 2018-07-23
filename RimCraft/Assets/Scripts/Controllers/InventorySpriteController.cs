@@ -74,13 +74,14 @@ public class InventorySpriteController : MonoBehaviour {
             
         }
 
-        //Добавить позднее:
-        //inv.RegisterOnCharacterChangedCallback(OnCharacterChanged);
+        inv.RegisterChangeCallback(OnInventoryChanged);
     }
 
     // Подписчик на событие в Furniture, которое вызывается когда что либо в фурнитуре меняется
     void OnInventoryChanged(Inventory inv)
     {
+        Debug.Log("OnCh");
+
         // Доработать! и задей
 
         // Меняем графику если это необходимо
@@ -91,8 +92,11 @@ public class InventorySpriteController : MonoBehaviour {
         }
 
         GameObject inv_go = inventoryGameObjectMap[inv];
-
-
-        inv_go.transform.position = new Vector3(inv.tile.X, inv.tile.Y, 0f);
+        Text text = inv_go.GetComponentInChildren<Text>();
+        // FIXME: если кол во предметов в стаке равно 1, то text.text должно быть равно ""
+        if (text != null)
+        {
+            text.text = inv.stackSize.ToString();
+        }
     }
 }

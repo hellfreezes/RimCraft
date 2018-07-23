@@ -22,7 +22,7 @@ public class Job {
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
     Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
 
-    Dictionary<string, Inventory> jobInventoryRequirements; // Необходимые для работы материалы
+    public Dictionary<string, Inventory> inventoryRequirements; // Необходимые для работы материалы
 
 
     public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] jobInventoryRequirements)
@@ -32,12 +32,12 @@ public class Job {
         this.cbJobComplete += cbJobComplete;
         this.jobTime = jobTime;
 
-        this.jobInventoryRequirements = new Dictionary<string, Inventory>();
+        this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (jobInventoryRequirements != null)
         {
             foreach (Inventory inv in jobInventoryRequirements)
             {
-                this.jobInventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
+                this.inventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
             }
         }
 
@@ -50,12 +50,12 @@ public class Job {
         this.cbJobComplete = other.cbJobComplete;
         this.jobTime = other.jobTime;
 
-        this.jobInventoryRequirements = new Dictionary<string, Inventory>();
-        if (other.jobInventoryRequirements != null)
+        this.inventoryRequirements = new Dictionary<string, Inventory>();
+        if (other.inventoryRequirements != null)
         {
-            foreach (Inventory inv in other.jobInventoryRequirements.Values)
+            foreach (Inventory inv in other.inventoryRequirements.Values)
             {
-                this.jobInventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
+                this.inventoryRequirements[inv.objectType] = inv.Clone(); // Клон потому, что нам нужна не ссылка на экземпляр, а новый экземпляр
             }
         }
     }
@@ -65,6 +65,10 @@ public class Job {
         return new Job(this);
     }
 
+    /// <summary>
+    /// Циклический метод, отвечает за процесс выполнения работы
+    /// </summary>
+    /// <param name="workTime">скорость выполнения работы</param>
     public void DoWork(float workTime)
     {
         jobTime -= workTime;
@@ -79,10 +83,65 @@ public class Job {
         }
     }
 
+    /// <summary>
+    /// Отменяем работу
+    /// </summary>
     public void CancelJob()
     {
         if (cbJobCancel != null)
             cbJobCancel(this);
+    }
+
+    /// <summary>
+    /// Проверяет находится ли в тайле с этой работой весь необходимый нам материал
+    /// </summary>
+    /// <returns></returns>
+    public bool HasAllMaterial()
+    {
+        foreach (Inventory inv in inventoryRequirements.Values)
+        {
+            if (inv.maxStackSize > inv.stackSize)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Проверяем нужен ли нам конкретный материал для работы
+    /// </summary>
+    /// <param name="inv">Проверяемый материал</param>
+    /// <returns></returns>
+    public int DesiresInventoryType(Inventory inv)
+    {
+        if (inventoryRequirements.ContainsKey(inv.objectType) == false)
+        {
+            //Этот материал нам ненужен вообще
+            return 0;
+        }
+
+        if (inventoryRequirements[inv.objectType].stackSize >= inventoryRequirements[inv.objectType].maxStackSize)
+        {
+            //Этого материала хватает для работы поэтому он больше не нужен
+            return 0;
+        }
+
+        // Этот материал нам нужен.
+        return inventoryRequirements[inv.objectType].maxStackSize - inventoryRequirements[inv.objectType].stackSize;
+    }
+
+    public Inventory GetFirstDesiredInventory()
+    {
+        foreach(Inventory inv in inventoryRequirements.Values)
+        {
+            if (inv.maxStackSize > inv.stackSize)
+            {
+                return inv;
+            }
+        }
+        return null;
     }
 
     public void RegisterJobCompleteCallback(Action<Job> cb)
