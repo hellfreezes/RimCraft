@@ -110,7 +110,7 @@ public class Character : IXmlSerializable {
         //В этой точке у нас есть работа и до нее есть путь
 
         /*
-         * 1. Хватает ли для это работы материала у персонажа?
+         * 1. Хватает ли для этой работы материала у персонажа?
          */
         if (myJob.HasAllMaterial() == false)
         {
@@ -122,10 +122,14 @@ public class Character : IXmlSerializable {
                 if (myJob.DesiresInventoryType(inventory) > 0)
                 {
                     // Если да. То несем это в место работы и кладем в тайл с работой
-                    if (currTile == destTile)
+                    if (currTile == myJob.tile)
                     {
                         // Мы в месте работы, поэтому складываем переносимый материал в место работы
                         currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
+
+                        // Вызываем все коллбэки. Потому, как в процессе выполнения с объектом задания могут происходить изменения. Например визуальные
+                        myJob.DoWork(0); 
+
                         // Переносит ли персонаж чтонибудь?
                         if (inventory.stackSize == 0)
                         { // Перонаж положил всё в тайл с работой. У него больше ничего нет. Обнуляем инвентарь
@@ -188,7 +192,7 @@ public class Character : IXmlSerializable {
                         return;
                     }
 
-                    // Идем в тайл в котором лежит нужный материал
+                    // Идем тайл в котором лежит нужный материал
                     // destTile = <тайл с нужным материалом>
                     destTile = supplier.tile;
                     return;

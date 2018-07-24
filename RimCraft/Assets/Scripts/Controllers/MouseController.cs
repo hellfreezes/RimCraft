@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MouseController : MonoBehaviour {
+public class MouseController : MonoBehaviour
+{
     [SerializeField]
     GameObject circleCursorPrefab;              // Объект курсор
     [SerializeField]
@@ -53,14 +54,16 @@ public class MouseController : MonoBehaviour {
         //Записываем текущее положение мыши для следующего кадра (в след кадре - это будет уже предыдущее положение мыши)
         lastFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         lastFramePosition.z = 0;
-	}
+    }
 
     // Обработка нажатия левой кнопки мыши
     private void UpdateDragging()
     {
         // Если мышь над элементом интерфейса, то отменяем выполнение
         if (EventSystem.current.IsPointerOverGameObject())
+        {
             return;
+        }
 
         // Это обработка drag&drop. Обработка прямоугольной области содержащей тайлы
         // Начало перетаскивания - фиксируем координаты тут

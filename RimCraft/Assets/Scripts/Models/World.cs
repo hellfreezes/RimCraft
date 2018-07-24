@@ -173,6 +173,11 @@ public class World : IXmlSerializable {
         furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
         furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
         furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
+
+        Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, false, false);
+        furniturePrototypes.Add("Stockpile", stockpilePrototype);
+        furniturePrototypes["Stockpile"].RegisterUpdateAction(FurnitureActions.Stockpile_UpdateAction);
+        furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
     }
 
 
@@ -382,7 +387,7 @@ public class World : IXmlSerializable {
     public void ReadXml(XmlReader reader)
     {
         float startTime = Time.time;
-        Debug.Log("World проходит десериализацию...");
+        //Debug.Log("World проходит десериализацию...");
         //throw new NotImplementedException();
         width = int.Parse(reader.GetAttribute("Width"));
         height = int.Parse(reader.GetAttribute("Height"));
@@ -405,27 +410,31 @@ public class World : IXmlSerializable {
         }
         //DEBUG - УДАЛИТЬ
         // Создаем предмет инвентаря чисто для тестов
-        Inventory inv = new Inventory();
-        inv.stackSize = 10;
+        Inventory inv = new Inventory("Steel Plate", 50, 3);
         Tile t = GetTileAt(Width / 2, Height / 2);
         inventoryManager.PlaceInventory(t, inv);
-
-        inv = new Inventory();
-        inv.stackSize = 18;
-        t = GetTileAt(Width / 2 - 2, Height / 2 - 3);
-        inventoryManager.PlaceInventory(t, inv);
-
-        inv = new Inventory();
-        inv.stackSize = 45;
-        t = GetTileAt(Width / 2 + 2, Height / 2 - 3);
-        inventoryManager.PlaceInventory(t, inv);
-
         if (cbInventoryCreated != null)
         {
             cbInventoryCreated(inv);
         }
 
-        Debug.Log("Мир загружен за " + (Time.time - startTime).ToString() + " секунд.");
+        inv = new Inventory("Steel Plate", 50, 4);
+        t = GetTileAt(Width / 2 - 2, Height / 2 - 3);
+        inventoryManager.PlaceInventory(t, inv);
+        if (cbInventoryCreated != null)
+        {
+            cbInventoryCreated(inv);
+        }
+
+        inv = new Inventory("Steel Plate", 50, 2);
+        t = GetTileAt(Width / 2 + 2, Height / 2 - 3);
+        inventoryManager.PlaceInventory(t, inv);
+        if (cbInventoryCreated != null)
+        {
+            cbInventoryCreated(inv);
+        }
+
+        //Debug.Log("Мир загружен за " + (Time.time - startTime).ToString() + " секунд.");
     }
 
     //Пробегается по всем тайлам далее в XML

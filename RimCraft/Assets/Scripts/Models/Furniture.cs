@@ -25,6 +25,9 @@ public class Furniture : IXmlSerializable {
 
     public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
 
+    // Перечень заданий связанных с данной конкретной фурнитурой
+    List<Job> jobs;
+
     // Ссылка на базовый тайл под объектом. Хотя объект может занимать больше чем 1 тайл
     public Tile tile { get; protected set; }
 
@@ -62,6 +65,7 @@ public class Furniture : IXmlSerializable {
     public Furniture()
     {
         furnParameters = new Dictionary<string, float>();
+        jobs = new List<Job>();
     }
 
     // Конструктор который копирует прототип - не использовать напрямую, если не используются субклассы
@@ -77,6 +81,8 @@ public class Furniture : IXmlSerializable {
 
        // Перенимаем кастомные параметры и методы
         this.furnParameters = new Dictionary<string, float>(other.furnParameters);
+        this.jobs = new List<Job>();
+
         if (other.updateActions != null)
             this.updateActions = (Action<Furniture, float>)other.updateActions.Clone();
         if (other.isEnterable != null)
@@ -162,6 +168,32 @@ public class Furniture : IXmlSerializable {
         }
 
         return obj;
+    }
+
+    public int JobCount()
+    {
+        return jobs.Count;
+    }
+
+    public void AddJob(Job j)
+    {
+        jobs.Add(j);
+        tile.world.jobQueue.Enqueue(j);
+    }
+
+    public void RemoveJob(Job j)
+    {
+        jobs.Remove(j);
+        j.CancelJob();
+        tile.world.jobQueue.Remove(j);
+    }
+
+    public void ClearJobs()
+    {
+        foreach (Job j in jobs)
+        {
+            RemoveJob(j);
+        }
     }
 
     public void RegisterOnChangeCallback(Action<Furniture> callback)

@@ -16,6 +16,15 @@ public class JobQueue {
 
     public void Enqueue(Job j)
     {
+        if (j.jobTime < 0)
+        {
+            // Работа с продолжительностью отрицательной - это работа которая выполняется мнгновенно после ее создания
+            // и не попадает в очередь работ
+
+            j.DoWork(0);
+            return;
+        }
+
         jobQueue.Enqueue(j);
         
         if (cbJobCreated != null)
@@ -30,6 +39,14 @@ public class JobQueue {
             return null;
 
         return jobQueue.Dequeue();
+    }
+
+    public void Remove(Job j)
+    {
+        // TODO: Кажется неправильное удаление. Придумать другое решение
+        List<Job> jobs = new List<Job>(jobQueue);
+        jobs.Remove(j);
+        jobQueue = new Queue<Job>(jobs);
     }
 
     public void RegisterJobCreationCallback(Action<Job> callback)

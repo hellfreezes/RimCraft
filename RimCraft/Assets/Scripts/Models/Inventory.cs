@@ -10,7 +10,7 @@ public class Inventory {
     public string objectType = "Steel Plate";
 
     public int maxStackSize = 50;
-    protected int _stackSize = 1;
+    private int _stackSize = 1;
     public int stackSize {
         get { return _stackSize; }
         set

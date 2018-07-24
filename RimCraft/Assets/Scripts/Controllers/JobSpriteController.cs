@@ -16,6 +16,12 @@ public class JobSpriteController : MonoBehaviour {
 	
 	// Update is called once per frame
 	void OnJobCreated (Job job) {
+        if (job.jobObjectType == null)
+        {
+            // У этой работы нет и не должно быть визуальной части
+            return;
+        }
+
         // Отобразить спрайт
         // Sprite theSprite = fsc.GetSpriteForFurniture(job.jobObjectType);
 

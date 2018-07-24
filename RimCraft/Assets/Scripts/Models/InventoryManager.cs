@@ -15,6 +15,13 @@ public class InventoryManager {
         inventories = new Dictionary<string, List<Inventory>>();
     }
 
+    /// <summary>
+    /// Добавляет предмет в лут тайла
+    /// Это единственное место, где лут добавляется в мировой словарь лута
+    /// </summary>
+    /// <param name="tile"></param>
+    /// <param name="inv"></param>
+    /// <returns></returns>
     public bool PlaceInventory(Tile tile, Inventory inv)
     {
         bool tileWasEmpty = tile.inventory == null; // Проверяем пуст ли тайл до назначений ниже
@@ -35,7 +42,7 @@ public class InventoryManager {
             {
                 inventories[tile.inventory.objectType] = new List<Inventory>();
             } 
-            inventories[tile.inventory.objectType].Add(inv);
+            inventories[tile.inventory.objectType].Add(tile.inventory); // Добавляем в мировой словарь
         }
 
 
@@ -78,11 +85,22 @@ public class InventoryManager {
         return true;
     }
 
-
+    /// <summary>
+    /// Помещаем предмет в руки персонажу.
+    /// </summary>
+    /// <param name="character"></param>
+    /// <param name="sourceInventory">обычно это тайл откуда персонаж забирает вещи</param>
+    /// <param name="amount">необходимое количество. если -1 (по умолч) то берем всё</param>
+    /// <returns></returns>
     public bool PlaceInventory(Character character, Inventory sourceInventory, int amount = -1)
     {
         if (amount < 0)
-            amount = sourceInventory.stackSize;
+        {
+            amount = sourceInventory.stackSize; // Берем всё что есть в источкинке предметов
+        } else
+        {
+            amount = Mathf.Min(amount, sourceInventory.stackSize); // Берем в источнике, не больше чем там есть
+        }
 
         if (character.inventory == null)
         {
@@ -115,7 +133,6 @@ public class InventoryManager {
 
         // В этом месте inv может быть пустым стаком если он объединен с другим стаком
         CleanupInventory(sourceInventory);
-
         return true;
     }
 

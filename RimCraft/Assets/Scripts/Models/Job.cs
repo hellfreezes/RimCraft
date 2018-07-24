@@ -11,16 +11,19 @@ public class Job {
 
     public Tile tile;
 
-    float jobTime = 1f; // время необходимое для выполнение работы
+    public float jobTime { get; protected set; } // время необходимое для выполнение работы
 
     //FIXME: временное решение связывающее экземпляр работы конкретно с фурнитурой. 
     //А хотелось бы чтобы работа могла быть связана с разными объектами
     // Использовать Generic
     public string jobObjectType { get; protected set; }
 
+    public bool acceptsAnyInventoryItem = false;
+
     // События которые расскажут всем подписчикам о том что происходит
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
     Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
+    Action<Job> cbJobWorked; // Работа выполняется (в процессе / прогресс)
 
     public Dictionary<string, Inventory> inventoryRequirements; // Необходимые для работы материалы
 
@@ -72,6 +75,10 @@ public class Job {
     public void DoWork(float workTime)
     {
         jobTime -= workTime;
+
+        if (cbJobWorked != null)
+            cbJobWorked(this);
+
         if (jobTime <= 0)
         {
             //Debug.Log("Работа выполнена");
@@ -90,6 +97,8 @@ public class Job {
     {
         if (cbJobCancel != null)
             cbJobCancel(this);
+
+        WorldController.Instance.world.jobQueue.Remove(this);
     }
 
     /// <summary>
@@ -113,9 +122,14 @@ public class Job {
     /// Проверяем нужен ли нам конкретный материал для работы
     /// </summary>
     /// <param name="inv">Проверяемый материал</param>
-    /// <returns></returns>
+    /// <returns>Сколько конкретно материала нужно. 0 если не нужен</returns>
     public int DesiresInventoryType(Inventory inv)
     {
+        if (acceptsAnyInventoryItem == true)
+        {
+            return inv.maxStackSize;
+        }
+
         if (inventoryRequirements.ContainsKey(inv.objectType) == false)
         {
             //Этот материал нам ненужен вообще
@@ -162,5 +176,15 @@ public class Job {
     public void UnregisterJobCancelCallback(Action<Job> cb)
     {
         cbJobCancel -= cb;
+    }
+
+    public void RegisterWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked += cb;
+    }
+
+    public void UnregisterWorkedCallback(Action<Job> cb)
+    {
+        cbJobWorked -= cb;
     }
 }

@@ -160,9 +160,10 @@ public class Tile : IXmlSerializable {
         // Нужно задействовать InventoryManager. Нужно дать знать предыдущему месту хранения предмета
         // о том убыл ли стак предмета полностью (и удалить его) либо только частично (и удалить лишь, то что убыло)
 
+        //Debug.Log("Inventory in tile placed");
         inventory = inv.Clone();
-        inv.tile = this;
-        //inv.stackSize = 0;
+        inventory.tile = this;
+        inv.stackSize = 0;
 
 
         return true;
