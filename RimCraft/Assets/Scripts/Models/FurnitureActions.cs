@@ -52,55 +52,79 @@ public static class FurnitureActions {
         theJob.tile.pendingFurnitureJob = null;
     }
 
+    public static Inventory[] Stockpile_GetItemFromFilter()
+    {
+        // TODO: получать эти данные из UI системы. Это фильтр вещей для зоны хранения
+
+        return new Inventory[1] { new Inventory("Steel Plate", 50, 0) };
+    }
+
     public static void Stockpile_UpdateAction(Furniture furn, float deltaTime)
     {
         // Убедимся что создали одну из следующих работ:
         // 1) если зона пуста, то любой предмет должен быть перенесен в эту зону
         // 2) если что то в зоне есть, то если стаки не полностью заполнены, то донести такие же предметы в эти стаки
+        
+        // TODO: Данная функция не должна вызываться каждый фрейм. А лишь в след случаях:
+        // 1) создан новый предмет
+        // 2) предмет доставлен
+        // 3) предмет поднят
+        // 4) пользователь изменил фильтр хранящихся в зоне вещей через интерфейс
 
+        if (furn.tile.inventory != null && furn.tile.inventory.stackSize >= furn.tile.inventory.maxStackSize)
+        {
+            //Стак заполнен
+            furn.ClearJobs();
+            return;
+        }
+
+        if (furn.tile.inventory != null && furn.tile.inventory.stackSize == 0)
+        {
+            Debug.LogError("В зоне хранение есть стак число предметов которого равно нулю! Где то ошибка. Такой стак должен был быть уничтожен.");
+            furn.ClearJobs();
+            return;
+        }
+
+        // Возможно что работа уже добавлена в очередь?
+        if (furn.JobCount() > 0)
+        {
+
+            return;
+        }
+
+        // В этой точке мы знаем что в инвентаре зоны ничего не лежит, но и работа на переноску еще не добавлена в очередь
+
+        // TODO: нужно сделать чтобы зона хранения могла быть не только 1 тайлом, но могла бы быть и множеством тайлов. Например зоной 10х10.
+
+        Inventory[] itemsDesired;
+
+        // в зоне ничего не лежит
         if (furn.tile.inventory == null)
         {
             // Зона пуста. Попросить принести сюда что-нибудь
-
-
-            // Проверяем есть ли уже тут работа
-            if (furn.JobCount() > 0)
-            {
-                return;
-            }
-
-            Job j = new Job(
-                furn.tile,
-                null,
-                null,
-                0,
-                new Inventory[1] { new Inventory("Steel Plate", 50, 0) }); //FIXME: каким то образом тут надо заносить все типы предметов которые могут быть перенесены в эту зону
-            j.RegisterWorkedCallback(Stockpile_JobWorked);
-
-            furn.AddJob(j);
-        } else if (furn.tile.inventory.stackSize < furn.tile.inventory.maxStackSize)
+            itemsDesired = Stockpile_GetItemFromFilter();
+        } else
         {
             // У нас есть какой то неполный стак
-            // Проверяем есть ли уже тут работа
-            if (furn.JobCount() > 0)
-            {
-                return;
-            }
 
             Inventory desInv = furn.tile.inventory.Clone();
             desInv.maxStackSize -= desInv.stackSize;
             desInv.stackSize = 0;
 
-            Job j = new Job(
+            itemsDesired = new Inventory[] { desInv };
+        }
+
+        Job j = new Job(
                 furn.tile,
                 null,
                 null,
                 0,
-                new Inventory[1] { desInv });
-            j.RegisterWorkedCallback(Stockpile_JobWorked);
+                itemsDesired);
+        // TODO: пока что полный запрет на переноску вещей из одного хранилища в другое. ИСПРАВИТЬ. Ввести приоритеты
+        j.canPickupFromStockpile = false;
+        j.RegisterWorkedCallback(Stockpile_JobWorked);
 
-            furn.AddJob(j);
-        }
+        furn.AddJob(j);
     }
 
     static void Stockpile_JobWorked(Job j)

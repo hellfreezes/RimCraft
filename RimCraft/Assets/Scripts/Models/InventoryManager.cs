@@ -166,7 +166,7 @@ public class InventoryManager {
     /// <param name="t">Тайл от которого искать ближайшие</param>
     /// <param name="desiredAmount">Необходимое количество</param>
     /// <returns>Если поблизости нет необходимого количества, то возвращает самый большой стак из найденных</returns>
-    public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount)
+    public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount, bool canTakeFromStockpile)
     {
         //FIXME: 
         // 1) Метод на самом деле выдает не самый ближайший предмет
@@ -182,7 +182,7 @@ public class InventoryManager {
         // Перебирает все стаки на сцене и выдает первый попавшийся соответствующий критериям
         foreach (Inventory inv in inventories[objectType])
         {
-            if (inv.tile != null)
+            if (inv.tile != null && (canTakeFromStockpile || inv.tile.furniture == null || inv.tile.furniture.IsStockpile() == false))
             {
                 return inv;
             }

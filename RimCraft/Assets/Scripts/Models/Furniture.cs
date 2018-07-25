@@ -183,7 +183,7 @@ public class Furniture : IXmlSerializable {
 
     public void RemoveJob(Job j)
     {
-        jobs.Remove(j);
+        //jobs.Remove(j);
         j.CancelJob();
         tile.world.jobQueue.Remove(j);
     }
@@ -194,6 +194,12 @@ public class Furniture : IXmlSerializable {
         {
             RemoveJob(j);
         }
+        jobs.Clear();
+    }
+
+    public bool IsStockpile()
+    {
+        return objectType == "Stockpile";
     }
 
     public void RegisterOnChangeCallback(Action<Furniture> callback)

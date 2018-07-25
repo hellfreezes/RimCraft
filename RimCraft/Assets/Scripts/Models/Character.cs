@@ -168,7 +168,7 @@ public class Character : IXmlSerializable {
                 // Персонаж ничего не держит.
 
                 // Находимся ли мы в тайле который содержит необходимые материалы для работы
-                if (currTile.inventory != null && myJob.DesiresInventoryType(currTile.inventory) > 0)
+                if (currTile.inventory != null && (myJob.canPickupFromStockpile || currTile.furniture == null || currTile.furniture.IsStockpile() == false) && myJob.DesiresInventoryType(currTile.inventory) > 0)
                 { // Если персонаж в тайле, который содержит нужный материал, то поднять его
                     // Поднять предметы
 
@@ -183,7 +183,7 @@ public class Character : IXmlSerializable {
                     Inventory desired = myJob.GetFirstDesiredInventory();
 
                     // FIXME: временное решение. Примитивно
-                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize);
+                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize, myJob.canPickupFromStockpile);
 
                     if (supplier == null)
                     { // На сцене нет нужного предмета для данной работы

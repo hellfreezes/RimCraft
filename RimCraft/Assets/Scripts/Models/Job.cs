@@ -19,6 +19,8 @@ public class Job {
     public string jobObjectType { get; protected set; }
 
     public bool acceptsAnyInventoryItem = false;
+    public bool canPickupFromStockpile = true;
+
 
     // События которые расскажут всем подписчикам о том что происходит
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
@@ -74,6 +76,19 @@ public class Job {
     /// <param name="workTime">скорость выполнения работы</param>
     public void DoWork(float workTime)
     {
+        // Предварительно проверить хватает ли нам всего для выполнения этой работы
+        if (HasAllMaterial() == false)
+        {
+            //Debug.LogError("Попытка выполнять работы для которой не хватает материалов");
+
+            // Работа не может быть завершена, т.к. не хватает материлов,
+            // но он всё еще вызывает коллбэки чтобы показывать прогресс ее выполнения
+            if (cbJobWorked != null)
+                cbJobWorked(this);
+
+            return;
+        }
+
         jobTime -= workTime;
 
         if (cbJobWorked != null)

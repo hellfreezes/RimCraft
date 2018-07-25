@@ -45,6 +45,14 @@ public class JobQueue {
     {
         // TODO: Кажется неправильное удаление. Придумать другое решение
         List<Job> jobs = new List<Job>(jobQueue);
+
+        if (jobs.Contains(j) == false)
+        {
+            // Debug.LogError("Попытка удалить из очереди работы, которой там нет");
+            // Скорее всего эта работа не в очереди потому, что какой то из персонажей над ней работает
+            return;
+        }
+
         jobs.Remove(j);
         jobQueue = new Queue<Job>(jobs);
     }
