@@ -43,6 +43,8 @@ public class InventoryManager {
                 inventories[tile.inventory.objectType] = new List<Inventory>();
             } 
             inventories[tile.inventory.objectType].Add(tile.inventory); // Добавляем в мировой словарь
+
+            tile.world.OnInventoryCreated(tile.inventory);
         }
 
 

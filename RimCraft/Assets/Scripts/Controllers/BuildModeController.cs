@@ -8,11 +8,81 @@ public class BuildModeController : MonoBehaviour {
     TileType buildModeTile = TileType.Floor;
     string buildModeObjectType;
 
+    GameObject furniturePreview;
+    FurnitureSpriteController fsc;
+    MouseController mouseController;
+
     // Use this for initialization
     void Start () {
+        fsc = FindObjectOfType<FurnitureSpriteController>();
+        mouseController = FindObjectOfType<MouseController>();
 
-	}
-	
+        // Заготовка под предпросмотор устанавливаемого объекта. Под мышку
+        furniturePreview = new GameObject();
+        furniturePreview.transform.SetParent(this.transform);
+        furniturePreview.AddComponent<SpriteRenderer>().sortingLayerName = "Jobs";
+        furniturePreview.SetActive(false);
+    }
+
+    private void Update()
+    {
+        if (buildModeIsObjects == true && buildModeObjectType != null & buildModeObjectType != "")
+        {
+            // Отобразить прозрачный образец устанавливаемого объекта
+            // подкрашенный цветом в зависимости от того возможна ли его установка здесь или нет
+            ShowFurnitureSpriteAtCoordinates(buildModeObjectType, mouseController.GetMouseOverTile());
+        } else
+        {   // Если мы не в режиме постройки объектов, то не показываем предпросмотр
+            furniturePreview.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// Показывает объект перед его установкой (Предпросмотр). Подкрашивает его в зависимости от возможности
+    /// установки
+    /// </summary>
+    /// <param name="furnitureType">Тип объекта</param>
+    /// <param name="t">В каком тайле показать</param>
+    void ShowFurnitureSpriteAtCoordinates(string furnitureType, Tile t)
+    {
+        furniturePreview.SetActive(true);
+
+        SpriteRenderer spriteRenderer = furniturePreview.GetComponent<SpriteRenderer>();
+
+        //Тут создается спрайт для предпросмотра того, что будет построено.
+        spriteRenderer.sprite = fsc.GetSpriteForFurniture(furnitureType);
+
+        if (WorldController.Instance.world.IsFurniturePlacmentVaild(furnitureType, t))
+        {
+            spriteRenderer.color = new Color(0.5f, 1f, 0.5f, 0.25f); // Установка разрешена
+        } else
+        {
+            spriteRenderer.color = new Color(1f, 0.5f, 0.5f, 0.25f); // Установка запрещена
+        }
+
+        Furniture proto = WorldController.Instance.world.furniturePrototypes[furnitureType];
+
+                                                                // Позиционирование объекта с учетом поправки на мультитайловость
+        furniturePreview.transform.position = new Vector3(t.X + ((proto.Width - 1) / 2f), t.Y + ((proto.Height - 1) / 2f), 0);
+    }
+
+    /// <summary>
+    /// Проверяет на возможность устанавливать объект перетаскиванием (сразу много объектов)
+    /// Привязка идет к размеру объекта. Если он 1х1 тайл, то перетаскивать его можно.
+    /// </summary>
+    /// <returns></returns>
+    public bool IsObjectDraggable()
+    {
+        if (buildModeIsObjects == false)
+        {
+            // пол можно перетаскивать
+            return true;
+        }
+        Furniture proto = WorldController.Instance.world.furniturePrototypes[buildModeObjectType];
+
+        return proto.Width == 1 && proto.Height == 1;
+    }
+
     public void SetMode_BuildFloor()
     {
         buildModeIsObjects = false;
@@ -75,6 +145,8 @@ public class BuildModeController : MonoBehaviour {
                     0.1f,
                     null);
                 }
+
+                j.furniturePrototype = WorldController.Instance.world.furniturePrototypes[furnitureType];
 
                 // FIXME: Это ручной способ. Надо чтобы всё происходило автоматически
                 t.pendingFurnitureJob = j;

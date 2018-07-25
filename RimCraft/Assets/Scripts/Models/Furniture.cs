@@ -40,8 +40,11 @@ public class Furniture : IXmlSerializable {
     public bool roomEnclouser { get; protected set; }
 
     // Размеры объекта в тайлах
-    int width = 1;
-    int height = 1;
+    public int Width { get; protected set; }
+    public int Height { get; protected set; }
+
+    public Color tint = Color.white; // Цвет подкрашивающий нашу фурнитуру
+
     public bool linksToNeighbour { get; protected set; }
 
     public Action<Furniture> cbOnChanged;
@@ -75,8 +78,9 @@ public class Furniture : IXmlSerializable {
         this.objectType = other.objectType;
         this.movementCost = other.movementCost;
         this.roomEnclouser = other.roomEnclouser;
-        this.width = other.width;
-        this.height = other.height;
+        this.Width = other.Width;
+        this.Height = other.Height;
+        this.tint = other.tint;
         this.linksToNeighbour = other.linksToNeighbour;
 
        // Перенимаем кастомные параметры и методы
@@ -87,6 +91,8 @@ public class Furniture : IXmlSerializable {
             this.updateActions = (Action<Furniture, float>)other.updateActions.Clone();
         if (other.isEnterable != null)
             this.isEnterable = (Func<Furniture, Enterablylity>)other.isEnterable.Clone();
+        if (other.funcPositionValidation != null)
+            this.funcPositionValidation = (Func<Tile, bool>)other.funcPositionValidation.Clone();
     }
 
     public virtual Furniture Clone()
@@ -111,8 +117,8 @@ public class Furniture : IXmlSerializable {
         this.objectType = objectType;
         this.movementCost = movementCost;
         this.roomEnclouser = roomEnclouser;
-        this.width = width;
-        this.height = height;
+        this.Width = width;
+        this.Height = height;
         this.linksToNeighbour = linksToNeighbour;
 
         this.funcPositionValidation = this.DEFAULT__IsVaildPosition;
@@ -220,19 +226,28 @@ public class Furniture : IXmlSerializable {
     /// <summary>
     /// Метод должен быть заменен скриптом LUA, подгружаемым для каждого вида фурнитуры
     /// отдельно из текстового файла.
-    /// </summary>\
+    /// </summary>
     protected bool DEFAULT__IsVaildPosition(Tile tile)
     {
-        // Проверяет можно ли ипользовать тайл для установки фурнитуры
-        if (tile.Type != TileType.Floor)
+        // На случай если фурнитура занимает больше чем 1х1 тайл
+        for (int x_off = tile.X; x_off < (tile.X + Width); x_off++)
         {
-            return false;
-        }
+            for (int y_off = tile.Y; y_off < (tile.Y + Height); y_off++)
+            {
+                Tile t = tile.world.GetTileAt(x_off, y_off);
 
-        // Также проверяет занятость
-        if (tile.furniture != null)
-        {
-            return false;
+                // Проверяет можно ли ипользовать тайл для установки фурнитуры
+                if (t.Type != TileType.Floor)
+                {
+                    return false;
+                }
+
+                // Также проверяет занятость
+                if (t.furniture != null)
+                {
+                    return false;
+                }
+            }
         }
 
         return true;

@@ -108,22 +108,37 @@ public class Tile : IXmlSerializable {
         cbTileChanged -= callback;
     }
 
+    public bool UninstallFurniture()
+    {
+        // FIXME: а что если объект состоит из нескольких тайлов?
+        furniture = null;
+        return true;
+    }
+
     public bool PlaceFurniture(Furniture objInstance)
     {
-        if (objInstance == null)
+        if (objInstance == null) // если null - то это скорее всего команда на демонтаж
         {
-            // Убираем объект
-            furniture = null;
-            return true;
+            return UninstallFurniture();
         }
 
-        if (furniture == objInstance)
+        if (objInstance.IsVaildPosition(this) == false)
         {
-            Debug.LogError("Попытка поставить объект в тайл, который уже имеет объект");
+            Debug.LogError("Попытка поставить объект в тайлы, которые не проходят проверку!");
             return false;
         }
 
-        furniture = objInstance;
+        // На случай если фурнитура занимает больше чем 1х1 тайл
+        for (int x_off = X; x_off < (X + objInstance.Width); x_off++)
+        {
+            for (int y_off = Y; y_off < (Y + objInstance.Height); y_off++)
+            {
+                Tile t = world.GetTileAt(x_off, y_off);
+
+                t.furniture = objInstance; //Аха и у нас сразу будет несколько таких фурнитур (не визуально но по функционалу)
+            }
+        }
+
         return true;
     }
 

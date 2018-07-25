@@ -21,6 +21,7 @@ public class Job {
     public bool acceptsAnyInventoryItem = false;
     public bool canPickupFromStockpile = true;
 
+    public Furniture furniturePrototype;
 
     // События которые расскажут всем подписчикам о том что происходит
     Action<Job> cbJobComplete; // Событие вызываемое по звершению работы

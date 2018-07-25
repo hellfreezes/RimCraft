@@ -361,6 +361,10 @@ public class Character : IXmlSerializable {
     // Метод вызываемый когда произошло событие отмены или завершения определенной работы
     void OnJobEnded (Job j)
     {
+        // Отписываем от событий данный метод для j.
+        j.UnregisterJobCancelCallback(OnJobEnded);
+        j.UnregisterJobCompleteCallback(OnJobEnded);
+
         if (j != myJob)
         {
             Debug.LogError("Персонажу сообщили о завершении чужой работы. Видимо мы забыли где то отписаться от события.");

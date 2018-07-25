@@ -23,7 +23,7 @@ public class World : IXmlSerializable {
     // Карта мира для поиска пути
     public Path_TileGraph tileGraph;
 
-    Dictionary<string, Furniture> furniturePrototypes;
+    public Dictionary<string, Furniture> furniturePrototypes { get; protected set; }
     public Dictionary<string, Job> furnitureJobPrototypes;
 
     // Ширина мира в кол-ве тайлов
@@ -162,22 +162,29 @@ public class World : IXmlSerializable {
         furniturePrototypes = new Dictionary<string, Furniture>();
         furnitureJobPrototypes = new Dictionary<string, Job>();
 
-
+        // Прототип стандартных стен ----------------------------------
         Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
         furniturePrototypes.Add("Wall", wallPrototype);
         furnitureJobPrototypes.Add("Wall", new Job(null, "Wall", FurnitureActions.JobComlete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) }));
 
+        // Прототип стандратной двери ---------------------------------
+        Furniture oxygenGeneratorPrototype = new Furniture("Oxygen Generator", 10f, 2, 2, false, false);
+        furniturePrototypes.Add("Oxygen Generator", oxygenGeneratorPrototype);
+
+        // Прототип стандратной зоны хранения--------------------------
+        Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, true, false);
+        furniturePrototypes.Add("Stockpile", stockpilePrototype);
+        furniturePrototypes["Stockpile"].RegisterUpdateAction(FurnitureActions.Stockpile_UpdateAction);
+        furniturePrototypes["Stockpile"].tint = new Color32(180, 30, 30, 255);
+        furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
+
+        // Прототип генератора кислорода ------------------------------
         Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
         furniturePrototypes.Add("Door", doorPrototype);
         furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр
         furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
         furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
         furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
-
-        Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, false, false);
-        furniturePrototypes.Add("Stockpile", stockpilePrototype);
-        furniturePrototypes["Stockpile"].RegisterUpdateAction(FurnitureActions.Stockpile_UpdateAction);
-        furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
     }
 
 
@@ -346,6 +353,13 @@ public class World : IXmlSerializable {
         InvalidateTileGraph();
     }
 
+    //Это фикс т.к. cbInventoryCreated по хорошему должно находится в InventoryManager
+    public void OnInventoryCreated(Inventory inv)
+    {
+        if (cbInventoryCreated != null)
+            cbInventoryCreated(inv);
+    }
+
     // Вызывается всякий раз кода происходит изменение мира
     // в следствии чего карта пути становится неправильной
     public void InvalidateTileGraph()
@@ -410,7 +424,7 @@ public class World : IXmlSerializable {
         }
         //DEBUG - УДАЛИТЬ
         // Создаем предмет инвентаря чисто для тестов
-        Inventory inv = new Inventory("Steel Plate", 50, 3);
+        Inventory inv = new Inventory("Steel Plate", 50, 50);
         Tile t = GetTileAt(Width / 2, Height / 2);
         inventoryManager.PlaceInventory(t, inv);
         if (cbInventoryCreated != null)

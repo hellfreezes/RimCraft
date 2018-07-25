@@ -40,14 +40,15 @@ public class JobSpriteController : MonoBehaviour {
         //Добавляем связь GameObject и экземпляра в словарь
         jobGameObjectMap.Add(job, job_go);
         job_go.name = "JOB_" + job.jobObjectType + "_" + job.tile.X + "_" + job.tile.Y;
-        job_go.transform.position = new Vector3(job.tile.X, job.tile.Y, 0);
+                                                                // Такая же поправка на мультитайловость как и в FurnSpriteCtrl
+        job_go.transform.position = new Vector3(job.tile.X + ((job.furniturePrototype.Width - 1)/2f), job.tile.Y + ((job.furniturePrototype.Height - 1)/2f), 0);
         job_go.transform.SetParent(this.transform, true);
 
         SpriteRenderer spriteRenderer = job_go.AddComponent<SpriteRenderer>();
 
         //Тут создается спрайт для предпросмотра того, что будет построено.
         spriteRenderer.sprite = fsc.GetSpriteForFurniture(job.jobObjectType);
-        spriteRenderer.sortingLayerName = "Furniture";
+        spriteRenderer.sortingLayerName = "Jobs";
         spriteRenderer.color = new Color(0.5f, 1f, 0.5f, 0.25f);
         //FIXME: Hardcode ... полный ппипец ниже
         //FIXME: Hardcoding - поворот двери точно должен быть не тут

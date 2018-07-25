@@ -17,6 +17,7 @@ public class MouseController : MonoBehaviour
 
     Vector3 dragStartPosition;                  // Позиция мыши с которой начато перетаскивание
     List<GameObject> dragPreviewGameObjects;    // Лист хранящий в себе маркеры выделенных тайлов
+    bool isDragging = false;
 
     // Use this for initialization
     void Start () {
@@ -38,7 +39,6 @@ public class MouseController : MonoBehaviour
             //Mathf.FloorToInt(currFramePosition.x), 
             //Mathf.FloorToInt(currFramePosition.y));
     }
-	
 
 
 	// Update is called once per frame
@@ -66,12 +66,27 @@ public class MouseController : MonoBehaviour
         }
 
         // Это обработка drag&drop. Обработка прямоугольной области содержащей тайлы
-        // Начало перетаскивания - фиксируем координаты тут
+        
+        // НАЧАЛО перетаскивания - фиксируем координаты тут
         if (Input.GetMouseButtonDown(0)) // нажата в предыдущем фрейме
         {
             //Запоминаем позицию с которой начали перетаскивание
             dragStartPosition = currFramePosition;
 
+            isDragging = true;
+        }
+
+        if (Input.GetMouseButtonUp(1) || Input.GetKeyUp(KeyCode.Escape))
+        {
+            // ПРАВАЯ кл. мыши отпущена, перетаскивание закончено.
+            isDragging = false;
+        }
+
+        // Непозволяем пользоваться перетаскиванием в строительно режиме
+        // если объект нельзя перетаскивать (растягивать). Если объект больше чем 1х1 тайл
+        if (buildModeController.IsObjectDraggable() == false)
+        {
+            dragStartPosition = currFramePosition;
         }
 
         // Координаты начала перетаскивания и конца перетаскивания (из них строится прямоугольная область)
@@ -106,7 +121,7 @@ public class MouseController : MonoBehaviour
             SimplePool.Despawn(go);
         }
 
-        if (Input.GetMouseButton(0)) // всё еще нажата - это процесс перетаскивания с зажатой лв. клавишей мыши
+        if (isDragging) // это процесс перетаскивания с зажатой лв. клавишей мыши
         {
             // Отобразить сетку подсказок, какие тайлы попали в область выделения
             // Перебираем все тайлы попавшие в прямоугольную область описанную перетаскиванием
@@ -128,9 +143,10 @@ public class MouseController : MonoBehaviour
             }
         }
 
-        // Конец перетаскивания - фиксируем тут координаты
-        if (Input.GetMouseButtonUp(0)) // отпущена
+        // КОНЕЦ перетаскивания - фиксируем тут координаты
+        if (isDragging && Input.GetMouseButtonUp(0)) // отпущена
         {
+            isDragging = false;
             // Перебираем все тайлы попавшие в прямоугольную область описанную перетаскиванием
             for (int x = start_x; x <= end_x; x++)
             {

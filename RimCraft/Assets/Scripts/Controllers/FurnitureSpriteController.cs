@@ -55,9 +55,12 @@ public class FurnitureSpriteController : MonoBehaviour {
         //Добавляем связь GameObject и экземпляра в словарь
         furnitureGameObjectMap.Add(furn, furn_go);
         furn_go.name = furn.objectType + "_" + furn.tile.X + "_" + furn.tile.Y;
-        furn_go.transform.position = new Vector3(furn.tile.X, furn.tile.Y, 0);
+                                                               //Применяем поправку позиционирования в случае мультитайловости
+                                                               //Незабыть, что furn.Width и furn.Height - это integer
+                                                               //Поэтому делим на float не на integer
+        furn_go.transform.position = new Vector3(furn.tile.X + ((furn.Width - 1) / 2f), furn.tile.Y + ((furn.Height - 1) / 2f), 0);
         furn_go.transform.SetParent(this.transform, true);
-
+        
         //FIXME: Hardcoding - поворот двери точно должен быть не тут
         if (furn.objectType == "Door")
         {
@@ -78,7 +81,8 @@ public class FurnitureSpriteController : MonoBehaviour {
         SpriteRenderer spriteRenderer = furn_go.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = GetSpriteForFurniture(furn);
         spriteRenderer.sortingLayerName = "Furniture";
-        
+        spriteRenderer.color = furn.tint;
+
         // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 
         // Если событие изменения происходит в tile_data, то вызывается метод OnTileTypeChanged
         furn.RegisterOnChangeCallback(OnFurnitureChanged);
@@ -96,6 +100,7 @@ public class FurnitureSpriteController : MonoBehaviour {
 
         GameObject furn_go = furnitureGameObjectMap[furn];
         furn_go.GetComponent<SpriteRenderer>().sprite = GetSpriteForFurniture(furn);
+        furn_go.GetComponent<SpriteRenderer>().color = furn.tint;
     }
 
     // Если графика спрайта имеет зависимость от соседних спрайтов, то вычисляем
