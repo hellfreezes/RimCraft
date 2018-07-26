@@ -10,7 +10,7 @@ public class MouseController : MonoBehaviour
     [SerializeField]
     GameObject buildModeControllerGO;
 
-
+    FurnitureSpriteController fsc;
     BuildModeController buildModeController;
     Vector3 lastFramePosition;                  // Позиция мыши взятая из предыдущего кадра
     Vector3 currFramePosition;                  // Позиция мыши в данный момент
@@ -19,8 +19,17 @@ public class MouseController : MonoBehaviour
     List<GameObject> dragPreviewGameObjects;    // Лист хранящий в себе маркеры выделенных тайлов
     bool isDragging = false;
 
+    enum MouseMode
+    {
+        SELECT,
+        BUILD
+    };
+
+    MouseMode currentMode = MouseMode.SELECT;
+
     // Use this for initialization
     void Start () {
+        fsc = FindObjectOfType<FurnitureSpriteController>();
         dragPreviewGameObjects = new List<GameObject>();
         buildModeController = buildModeControllerGO.GetComponent<BuildModeController>();
 	}
@@ -47,6 +56,17 @@ public class MouseController : MonoBehaviour
         currFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         currFramePosition.z = 0;
 
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            if (currentMode == MouseMode.BUILD)
+            {
+                currentMode = MouseMode.SELECT;
+            } else if (currentMode == MouseMode.SELECT)
+            {
+                Debug.Log("Тут можно показать игровое меню");
+            }
+        }
+
         //UpdateCursor();
         UpdateDragging();
         UpdateCameraMovement();
@@ -65,8 +85,21 @@ public class MouseController : MonoBehaviour
             return;
         }
 
+        // Подчищаем ненужные копии маркеров каждый фрейм
+        while (dragPreviewGameObjects.Count > 0)
+        {
+            // TODO: не самое лучше решение на мой взгляд
+            // Находит ВСЕ маркеры и деспавнит их КАЖДЫЙ фрейм
+            GameObject go = dragPreviewGameObjects[0];
+            dragPreviewGameObjects.RemoveAt(0);
+            SimplePool.Despawn(go);
+        }
+
+        if (currentMode != MouseMode.BUILD)
+            return;
+
         // Это обработка drag&drop. Обработка прямоугольной области содержащей тайлы
-        
+
         // НАЧАЛО перетаскивания - фиксируем координаты тут
         if (Input.GetMouseButtonDown(0)) // нажата в предыдущем фрейме
         {
@@ -74,6 +107,9 @@ public class MouseController : MonoBehaviour
             dragStartPosition = currFramePosition;
 
             isDragging = true;
+        } else if (isDragging == false)
+        {
+            dragStartPosition = currFramePosition;
         }
 
         if (Input.GetMouseButtonUp(1) || Input.GetKeyUp(KeyCode.Escape))
@@ -110,19 +146,8 @@ public class MouseController : MonoBehaviour
             start_y = tmp;
         }
 
-
-        // Подчищаем ненужные копии маркеров каждый фрейм
-        while(dragPreviewGameObjects.Count > 0)
-        {
-            // TODO: не самое лучше решение на мой взгляд
-            // Находит ВСЕ маркеры и деспавнит их КАЖДЫЙ фрейм
-            GameObject go = dragPreviewGameObjects[0];
-            dragPreviewGameObjects.RemoveAt(0);
-            SimplePool.Despawn(go);
-        }
-
-        if (isDragging) // это процесс перетаскивания с зажатой лв. клавишей мыши
-        {
+        //if (isDragging) // это процесс перетаскивания с зажатой лв. клавишей мыши
+        //{
             // Отобразить сетку подсказок, какие тайлы попали в область выделения
             // Перебираем все тайлы попавшие в прямоугольную область описанную перетаскиванием
             // Отображаем подсказку
@@ -135,13 +160,20 @@ public class MouseController : MonoBehaviour
                     Tile t = WorldController.Instance.world.GetTileAt(x, y);
                     if (t != null)
                     {
-                        GameObject go = SimplePool.Spawn(circleCursorPrefab, new Vector3(x, y, 0), Quaternion.identity);
-                        go.transform.SetParent(this.transform, true);
-                        dragPreviewGameObjects.Add(go);
+                        if (buildModeController.buildModeIsObjects) // Если устанавливаем объект (фурнитуру)
+                        {
+                            ShowFurnitureSpriteAtCoordinates(buildModeController.buildModeObjectType, t);
+                        } else // устанавливаем всё остальное
+                        {
+                            // показываем перетаскивание
+                            GameObject go = SimplePool.Spawn(circleCursorPrefab, new Vector3(x, y, 0), Quaternion.identity);
+                            go.transform.SetParent(this.transform, true);
+                            dragPreviewGameObjects.Add(go);
+                        }
                     }
                 }
             }
-        }
+        //}
 
         // КОНЕЦ перетаскивания - фиксируем тут координаты
         if (isDragging && Input.GetMouseButtonUp(0)) // отпущена
@@ -178,5 +210,43 @@ public class MouseController : MonoBehaviour
 
         Camera.main.orthographicSize -= Camera.main.orthographicSize * Input.GetAxis("Mouse ScrollWheel");
         Camera.main.orthographicSize = Mathf.Clamp(Camera.main.orthographicSize, 3f, 25f);
+    }
+
+    /// <summary>
+    /// Показывает объект перед его установкой (Предпросмотр). Подкрашивает его в зависимости от возможности
+    /// установки
+    /// </summary>
+    /// <param name="furnitureType">Тип объекта</param>
+    /// <param name="t">В каком тайле показать</param>
+    void ShowFurnitureSpriteAtCoordinates(string furnitureType, Tile t)
+    {
+        GameObject go = new GameObject();
+        go.transform.SetParent(this.transform, true);
+        dragPreviewGameObjects.Add(go);
+
+        SpriteRenderer spriteRenderer = go.AddComponent<SpriteRenderer>();
+
+        //Тут создается спрайт для предпросмотра того, что будет построено.
+        spriteRenderer.sprite = fsc.GetSpriteForFurniture(furnitureType);
+        spriteRenderer.sortingLayerName = "Jobs";
+
+        if (WorldController.Instance.world.IsFurniturePlacmentVaild(furnitureType, t))
+        {
+            spriteRenderer.color = new Color(0.5f, 1f, 0.5f, 0.25f); // Установка разрешена
+        }
+        else
+        {
+            spriteRenderer.color = new Color(1f, 0.5f, 0.5f, 0.25f); // Установка запрещена
+        }
+
+        Furniture proto = WorldController.Instance.world.furniturePrototypes[furnitureType];
+
+        // Позиционирование объекта с учетом поправки на мультитайловость
+        go.transform.position = new Vector3(t.X + ((proto.Width - 1) / 2f), t.Y + ((proto.Height - 1) / 2f), 0);
+    }
+
+    public void StartBuildMode()
+    {
+        currentMode = MouseMode.BUILD;
     }
 }

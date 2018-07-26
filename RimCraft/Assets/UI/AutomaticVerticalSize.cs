@@ -24,7 +24,7 @@ public class AutomaticVerticalSize : MonoBehaviour {
     public void AdjustSize()
     {
         Vector2 size = this.GetComponent<RectTransform>().sizeDelta;
-        size.y = this.transform.childCount * childHeight;
+        size.y = this.transform.childCount * (childHeight + 2);
 
         this.GetComponent<RectTransform>().sizeDelta = size;
     }

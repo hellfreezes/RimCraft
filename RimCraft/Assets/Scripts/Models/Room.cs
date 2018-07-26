@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -7,15 +8,24 @@ using UnityEngine;
 /// </summary>
 public class Room {
 
-    public float atmosO2 = 0;
-    public float atmosN = 0;
-    public float atmosCO2 = 0;
+    Dictionary<string, float> atmosphericGasses;
 
     List<Tile> tiles;
 
-    public Room ()
+    World world;
+
+    public bool IsOutSideRoom()
     {
+        //if (tiles.Count == 0)
+       //     return false;
+        return this == world.GetOutsideRoom();
+    }
+
+    public Room (World world)
+    {
+        this.world = world;
         tiles = new List<Tile>();
+        atmosphericGasses = new Dictionary<string, float>();
     }
 
     /// <summary>
@@ -51,6 +61,57 @@ public class Room {
         tiles = new List<Tile>();
     }
 
+    public void ChangeGas(string name, float amount)
+    {
+        if (IsOutSideRoom())
+        {
+            return;
+        }
+
+        if (atmosphericGasses.ContainsKey(name))
+        {
+            atmosphericGasses[name] += amount;
+        } else
+        {
+            atmosphericGasses[name] = amount;
+        }
+
+        if (atmosphericGasses[name] < 0)
+        {
+            atmosphericGasses[name] = 0;
+        }
+    }
+
+    public float GetGasAmount(string name)
+    {
+        if (atmosphericGasses.ContainsKey(name))
+        {
+            return atmosphericGasses[name];
+        }
+        return 0;
+    }
+
+    public float GetGasPercentage(string name)
+    {
+        if (atmosphericGasses.ContainsKey(name) == false)
+        {
+            return 0;
+        }
+
+        float t = 0;
+        foreach (string n in atmosphericGasses.Keys)
+        {
+            t += atmosphericGasses[n];
+
+        }
+
+        return atmosphericGasses[name] / t;
+    }
+
+    public string[] GetGasNames()
+    {
+        return atmosphericGasses.Keys.ToArray();
+    }
 
     /// <summary>
     /// Проверяет тайлы вокруг на наличие объекты способных образовать комнаты
@@ -74,7 +135,7 @@ public class Room {
         sourceFurniture.tile.room = null;
         oldRoom.tiles.Remove(sourceFurniture.tile);
 
-        if(oldRoom != world.GetOutsideRoom())
+        if(oldRoom.IsOutSideRoom() == false)// != world.GetOutsideRoom())
         {
             // Тут oldRoom  не должна иметь какие либо привязанные тайлы
             // и следующая операция просто должна удалить комнату из списка в классе World
@@ -119,7 +180,7 @@ public class Room {
         }
 
         // Если добались до сюда, значит нам нужно создать новую комнату
-        Room newRoom = new Room();
+        Room newRoom = new Room(oldRoom.world);
 
         Queue<Tile> tilesToCheck = new Queue<Tile>(); // Создаем очередь из тайлов
         // Тайл проверен и может быть добавлен в новую комнату
@@ -163,11 +224,17 @@ public class Room {
         }
 
         //Копируем состояние комнаты из предыдущей комнаты
-        newRoom.atmosCO2    = oldRoom.atmosCO2;
-        newRoom.atmosN      = oldRoom.atmosN;
-        newRoom.atmosO2     = oldRoom.atmosO2;
+        newRoom.CopyGas(oldRoom);
 
         tile.world.AddRoom(newRoom);
 
+    }
+
+    void CopyGas(Room other)
+    {
+        foreach (string n in atmosphericGasses.Keys)
+        {
+            this.atmosphericGasses[n] = other.atmosphericGasses[n];
+        }
     }
 }

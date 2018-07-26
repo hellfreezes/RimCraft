@@ -107,7 +107,7 @@ public class World : IXmlSerializable {
         tiles = new Tile[width, height];
 
         rooms = new List<Room>();
-        rooms.Add(new Room()); // улица - внешнее пространство
+        rooms.Add(new Room(this)); // улица - внешнее пространство
 
         //Заполняется новыми тайлами
         for (int x = 0; x < width; x++)
@@ -167,9 +167,10 @@ public class World : IXmlSerializable {
         furniturePrototypes.Add("Wall", wallPrototype);
         furnitureJobPrototypes.Add("Wall", new Job(null, "Wall", FurnitureActions.JobComlete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) }));
 
-        // Прототип стандратной двери ---------------------------------
+        // Прототип генератора кислорода ---------------------------------
         Furniture oxygenGeneratorPrototype = new Furniture("Oxygen Generator", 10f, 2, 2, false, false);
         furniturePrototypes.Add("Oxygen Generator", oxygenGeneratorPrototype);
+        furniturePrototypes["Oxygen Generator"].RegisterUpdateAction(FurnitureActions.OxygenGenerator_UpdateAction);
 
         // Прототип стандратной зоны хранения--------------------------
         Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, true, false);
@@ -178,7 +179,7 @@ public class World : IXmlSerializable {
         furniturePrototypes["Stockpile"].tint = new Color32(180, 30, 30, 255);
         furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
 
-        // Прототип генератора кислорода ------------------------------
+        // Прототип стадартной двери ------------------------------
         Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
         furniturePrototypes.Add("Door", doorPrototype);
         furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр

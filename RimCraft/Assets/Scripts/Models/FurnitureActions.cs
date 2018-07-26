@@ -142,4 +142,18 @@ public static class FurnitureActions {
             }
         }
     }
+
+    // Что делает генератор кислорода
+    public static void OxygenGenerator_UpdateAction(Furniture furn, float deltaTime)
+    {
+        if (furn.tile.room.GetGasAmount("O2") < 0.20f)
+        {// Ограничение давления кислорода в комнате
+            furn.tile.room.ChangeGas("O2", 0.01f * deltaTime);
+
+            //TODO: потреблять электричество в процессе работы!
+        } else
+        {
+            // Нужно ли потреблять электричество в простое?
+        }
+    }
 }
