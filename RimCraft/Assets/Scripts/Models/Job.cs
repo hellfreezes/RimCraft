@@ -11,6 +11,9 @@ public class Job {
 
     public Tile tile;
 
+    protected float jobTimeRequried;
+    protected bool jobRepeats = false;
+
     public float jobTime { get; protected set; } // время необходимое для выполнение работы
 
     //FIXME: временное решение связывающее экземпляр работы конкретно с фурнитурой. 
@@ -22,21 +25,23 @@ public class Job {
     public bool canPickupFromStockpile = true;
 
     public Furniture furniturePrototype;
+    public Furniture furniture; // Сооружение, которое владеет данной работой
 
     // События которые расскажут всем подписчикам о том что происходит
-    Action<Job> cbJobComplete; // Событие вызываемое по звершению работы
-    Action<Job> cbJobCancel;  // Событие вызываемое если работа отменена
+    Action<Job> cbJobCompleted; // Событие вызываемое по звершению работы, работа прошла полный цикл
+    Action<Job> cbJobStopped;  // Событие вызываемое если работа отменена или работа не повторяется
     Action<Job> cbJobWorked; // Работа выполняется (в процессе / прогресс)
 
     public Dictionary<string, Inventory> inventoryRequirements; // Необходимые для работы материалы
 
 
-    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] jobInventoryRequirements)
+    public Job(Tile tile, string jobObjectType, Action<Job> cbJobComplete, float jobTime, Inventory[] jobInventoryRequirements, bool jobRepeats = false)
     {
         this.tile = tile;
         this.jobObjectType = jobObjectType;
-        this.cbJobComplete += cbJobComplete;
-        this.jobTime = jobTime;
+        this.cbJobCompleted += cbJobComplete;
+        this.jobTimeRequried = this.jobTime = jobTime;
+        this.jobRepeats = jobRepeats;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (jobInventoryRequirements != null)
@@ -53,7 +58,7 @@ public class Job {
     {
         this.tile = other.tile;
         this.jobObjectType = other.jobObjectType;
-        this.cbJobComplete = other.cbJobComplete;
+        this.cbJobCompleted = other.cbJobCompleted;
         this.jobTime = other.jobTime;
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
@@ -92,18 +97,34 @@ public class Job {
 
         jobTime -= workTime;
 
+        //Debug.Log("Job work: " + jobTime);
+
         if (cbJobWorked != null)
             cbJobWorked(this);
 
         if (jobTime <= 0)
         {
             //Debug.Log("Работа выполнена");
-            if (cbJobComplete != null)
+            if (cbJobCompleted != null)
             {
-                //Выполняем методы которые подписались
-                cbJobComplete(this);
+                // Происходит то, что должно произойти при завершении работы
+                // Выполняем методы которые подписались
+                cbJobCompleted(this);
+            }
+
+            if (jobRepeats == false)
+            {
+                if (cbJobStopped != null)
+                    // Дать подписчикам знать что работы остановлены
+                    cbJobStopped(this);
+            } else
+            {
+                // Работа повторяемая, соответсвенно должна быть сброшена и начата заново
+                jobTime += jobTimeRequried;
             }
         }
+
+        //Debug.Log("Job work: " + jobTime);
     }
 
     /// <summary>
@@ -111,10 +132,16 @@ public class Job {
     /// </summary>
     public void CancelJob()
     {
-        if (cbJobCancel != null)
-            cbJobCancel(this);
+        if (cbJobStopped != null)
+            cbJobStopped(this);
 
-        WorldController.Instance.world.jobQueue.Remove(this);
+        World.current.jobQueue.Remove(this);
+    }
+
+    public void Abandon()
+    {
+        if (cbJobStopped != null)
+            cbJobStopped(this);
     }
 
     /// <summary>
@@ -174,24 +201,24 @@ public class Job {
         return null;
     }
 
-    public void RegisterJobCompleteCallback(Action<Job> cb)
+    public void RegisterJobCompletedCallback(Action<Job> cb)
     {
-        cbJobComplete += cb;
+        cbJobCompleted += cb;
     }
 
-    public void UnregisterJobCompleteCallback(Action<Job> cb)
+    public void UnregisterJobCompletedCallback(Action<Job> cb)
     {
-        cbJobComplete -= cb;
+        cbJobCompleted -= cb;
     }
 
-    public void RegisterJobCancelCallback(Action<Job> cb)
+    public void RegisterJobStoppedCallback(Action<Job> cb)
     {
-        cbJobCancel += cb;
+        cbJobStopped += cb;
     }
 
-    public void UnregisterJobCancelCallback(Action<Job> cb)
+    public void UnregisterJobStoppedCallback(Action<Job> cb)
     {
-        cbJobCancel -= cb;
+        cbJobStopped -= cb;
     }
 
     public void RegisterWorkedCallback(Action<Job> cb)

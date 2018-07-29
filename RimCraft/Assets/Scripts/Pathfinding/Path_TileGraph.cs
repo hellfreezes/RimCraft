@@ -94,12 +94,12 @@ public class Path_TileGraph {
             int dX = curr.X - neigh.X;
             int dY = curr.Y - neigh.Y;
 
-            if (curr.world.GetTileAt(curr.X - dX, curr.Y).movementCost == 0)
+            if (World.current.GetTileAt(curr.X - dX, curr.Y).movementCost == 0)
             {
                 //E или W непроходим, значит это будет срезание угла
                 return true;
             }
-            if (curr.world.GetTileAt(curr.X, curr.Y - dY).movementCost == 0)
+            if (World.current.GetTileAt(curr.X, curr.Y - dY).movementCost == 0)
             {
                 //S или N непроходим, значит это будет срезание угла
                 return true;

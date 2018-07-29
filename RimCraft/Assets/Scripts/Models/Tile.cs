@@ -52,7 +52,7 @@ public class Tile : IXmlSerializable {
 
     public Job pendingFurnitureJob;
     
-    public World world { get; protected set; } //Ссылка на мир
+    //public World.current World.current { get; protected set; } //Ссылка на мир
     int x; //Место по X в мире
     int y; //Место по Y в мире
 
@@ -91,9 +91,9 @@ public class Tile : IXmlSerializable {
     }
 
     //Конструктор класса
-    public Tile(World world, int x, int y)
+    public Tile(int x, int y)
     {
-        this.world = world;
+        //this.World.current = World.current;
         this.x = x;
         this.y = y;
     }
@@ -108,10 +108,24 @@ public class Tile : IXmlSerializable {
         cbTileChanged -= callback;
     }
 
-    public bool UninstallFurniture()
+    public bool UnplaceFurniture()
     {
-        // FIXME: а что если объект состоит из нескольких тайлов?
-        furniture = null;
+        if (furniture == null)
+            return false;
+
+        Furniture f = furniture;
+
+        // На случай если фурнитура занимает больше чем 1х1 тайл
+        for (int x_off = X; x_off < (X + f.Width); x_off++)
+        {
+            for (int y_off = Y; y_off < (Y + f.Height); y_off++)
+            {
+                Tile t = World.current.GetTileAt(x_off, y_off);
+
+                t.furniture = null; //Аха и у нас сразу будет несколько таких фурнитур (не визуально но по функционалу)
+            }
+        }
+
         return true;
     }
 
@@ -119,7 +133,7 @@ public class Tile : IXmlSerializable {
     {
         if (objInstance == null) // если null - то это скорее всего команда на демонтаж
         {
-            return UninstallFurniture();
+            return UnplaceFurniture();
         }
 
         if (objInstance.IsVaildPosition(this) == false)
@@ -133,7 +147,7 @@ public class Tile : IXmlSerializable {
         {
             for (int y_off = Y; y_off < (Y + objInstance.Height); y_off++)
             {
-                Tile t = world.GetTileAt(x_off, y_off);
+                Tile t = World.current.GetTileAt(x_off, y_off);
 
                 t.furniture = objInstance; //Аха и у нас сразу будет несколько таких фурнитур (не визуально но по функционалу)
             }
@@ -249,24 +263,24 @@ public class Tile : IXmlSerializable {
 
         Tile n;
 
-        n = world.GetTileAt(X, Y + 1);
+        n = World.current.GetTileAt(X, Y + 1);
         ns[0] = n;
-        n = world.GetTileAt(X + 1, Y);
+        n = World.current.GetTileAt(X + 1, Y);
         ns[1] = n;
-        n = world.GetTileAt(X, Y - 1);
+        n = World.current.GetTileAt(X, Y - 1);
         ns[2] = n;
-        n = world.GetTileAt(X - 1, Y);
+        n = World.current.GetTileAt(X - 1, Y);
         ns[3] = n;
 
         if (isDiagOkay == true)
         {
-            n = world.GetTileAt(X + 1, Y + 1);
+            n = World.current.GetTileAt(X + 1, Y + 1);
             ns[4] = n;
-            n = world.GetTileAt(X + 1, Y - 1);
+            n = World.current.GetTileAt(X + 1, Y - 1);
             ns[5] = n;
-            n = world.GetTileAt(X - 1, Y - 1);
+            n = World.current.GetTileAt(X - 1, Y - 1);
             ns[6] = n;
-            n = world.GetTileAt(X - 1, Y + 1);
+            n = World.current.GetTileAt(X - 1, Y + 1);
             ns[7] = n;
         }
 
@@ -297,22 +311,22 @@ public class Tile : IXmlSerializable {
 
     public Tile North()
     {
-        return world.GetTileAt(x, y + 1);
+        return World.current.GetTileAt(x, y + 1);
     }
 
     public Tile South()
     {
-        return world.GetTileAt(x, y - 1);
+        return World.current.GetTileAt(x, y - 1);
     }
 
     public Tile West()
     {
-        return world.GetTileAt(x - 1, y);
+        return World.current.GetTileAt(x - 1, y);
     }
 
     public Tile East()
     {
-        return world.GetTileAt(x + 1, y);
+        return World.current.GetTileAt(x + 1, y);
     }
 
 
@@ -331,7 +345,8 @@ public class Tile : IXmlSerializable {
     public void ReadXml(XmlReader reader)
     {
         // Мы не читаем координаты тайла. Т.к. они сохраняются в момент его создания
-        // А к этому моменту тайл создан. За его создание отвечает World
+        // А к этому моменту тайл создан. За его создание отвечает World.current
+        room = World.current.GetRoomFromId(int.Parse(reader.GetAttribute("RoomID")));
         Type = (TileType)int.Parse(reader.GetAttribute("Type"));
     }
 
@@ -339,6 +354,7 @@ public class Tile : IXmlSerializable {
     {
         writer.WriteAttributeString("X", x.ToString());
         writer.WriteAttributeString("Y", y.ToString());
+        writer.WriteAttributeString("RoomID", room == null ? "-1" : room.ID.ToString());
         writer.WriteAttributeString("Type", ((int)Type).ToString());
     }
 }

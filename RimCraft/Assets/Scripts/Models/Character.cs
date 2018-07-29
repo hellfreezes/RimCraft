@@ -14,6 +14,8 @@ public class Character : IXmlSerializable {
     public float X {
         get
         {
+            if (nextTile == null)
+                return currTile.X;
             return Mathf.Lerp(currTile.X, nextTile.X, movementProcentage);
         }
     }
@@ -21,6 +23,8 @@ public class Character : IXmlSerializable {
     {
         get
         {
+            if (nextTile == null)
+                return currTile.Y;
             return Mathf.Lerp(currTile.Y, nextTile.Y, movementProcentage);
         }
     }
@@ -66,22 +70,22 @@ public class Character : IXmlSerializable {
 
     void GetNewJob()
     {
-        myJob = currTile.world.jobQueue.Dequeue();
+        myJob = World.current.jobQueue.Dequeue();
 
         if (myJob == null)
             return;
 
         destTile = myJob.tile;
         //Подписываем метод OnJobEnded на указанные ниже события происходящие в Job
-        myJob.RegisterJobCompleteCallback(OnJobEnded);
-        myJob.RegisterJobCancelCallback(OnJobEnded);
+        //myJob.RegisterJobCompletedCallback(OnJobStopped);
+        myJob.RegisterJobStoppedCallback(OnJobStopped);
 
         // Тутже проверяем возможно ли добраться до тайла в котором находится эта работа
         // Возможно персонаж не пойдет в место работы сразу (возможно нужно еще захватить материал)
         // Но проверить возможно ли дойти до места работы всё же необходимо.
 
 
-        pathAStar = new Path_AStar(currTile.world, currTile, destTile);
+        pathAStar = new Path_AStar(World.current, currTile, destTile);
         if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
         {
             Debug.LogError("До пункта назначения (до работы) нет пути");
@@ -125,7 +129,7 @@ public class Character : IXmlSerializable {
                     if (currTile == myJob.tile)
                     {
                         // Мы в месте работы, поэтому складываем переносимый материал в место работы
-                        currTile.world.inventoryManager.PlaceInventory(myJob, inventory);
+                        World.current.inventoryManager.PlaceInventory(myJob, inventory);
 
                         // Вызываем все коллбэки. Потому, как в процессе выполнения с объектом задания могут происходить изменения. Например визуальные
                         myJob.DoWork(0); 
@@ -155,7 +159,7 @@ public class Character : IXmlSerializable {
                     // Персонаж держит какой то предмет, но для работы он не нужен
                     // Надо бросить этот предмет.
                     // TODO: найти ближайший свободный тайл и бросить предмет туда
-                    if (currTile.world.inventoryManager.PlaceInventory(currTile, inventory) == false)
+                    if (World.current.inventoryManager.PlaceInventory(currTile, inventory) == false)
                     {
                         Debug.LogError("Персонаж попробовать положить предмет в неправильный тайл");
                         //FIXME: следующая строка приведет к потере предмета
@@ -172,7 +176,7 @@ public class Character : IXmlSerializable {
                 { // Если персонаж в тайле, который содержит нужный материал, то поднять его
                     // Поднять предметы
 
-                    currTile.world.inventoryManager.PlaceInventory(this, currTile.inventory, myJob.DesiresInventoryType(currTile.inventory));
+                    World.current.inventoryManager.PlaceInventory(this, currTile.inventory, myJob.DesiresInventoryType(currTile.inventory));
 
                 }
                 else
@@ -183,7 +187,7 @@ public class Character : IXmlSerializable {
                     Inventory desired = myJob.GetFirstDesiredInventory();
 
                     // FIXME: временное решение. Примитивно
-                    Inventory supplier = currTile.world.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize, myJob.canPickupFromStockpile);
+                    Inventory supplier = World.current.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize, myJob.canPickupFromStockpile);
 
                     if (supplier == null)
                     { // На сцене нет нужного предмета для данной работы
@@ -241,7 +245,7 @@ public class Character : IXmlSerializable {
             if (pathAStar == null || pathAStar.Lenght() == 0)
             {
                 // Путь еще не построен, значит построить
-                pathAStar = new Path_AStar(currTile.world, currTile, destTile);
+                pathAStar = new Path_AStar(World.current, currTile, destTile);
                 if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
                 {
                     Debug.LogError("До пункта назначения нет пути");
@@ -258,7 +262,7 @@ public class Character : IXmlSerializable {
             nextTile = pathAStar.Dequeue();
             if (nextTile == currTile)
             {
-                Debug.LogError("попытка получить следующий тайл неудалась: nextTile == currTile");
+                Debug.Log("попытка получить следующий тайл неудалась: nextTile == currTile");
             }
         }
 
@@ -342,9 +346,9 @@ public class Character : IXmlSerializable {
         nextTile = destTile = currTile;
         pathAStar = null;
         //Debug.Log("Возврат работы обратно в очередь: " + myJob);
-        currTile.world.jobQueue.Enqueue(myJob);
-        myJob.CancelJob();
-        //myJob = null;
+        World.current.jobQueue.Enqueue(myJob);
+        //myJob.Abandon();
+        myJob = null;
     }
 
     // Установить тайл назначения движения
@@ -359,11 +363,11 @@ public class Character : IXmlSerializable {
     }
 
     // Метод вызываемый когда произошло событие отмены или завершения определенной работы
-    void OnJobEnded (Job j)
+    void OnJobStopped (Job j)
     {
         // Отписываем от событий данный метод для j.
-        j.UnregisterJobCancelCallback(OnJobEnded);
-        j.UnregisterJobCompleteCallback(OnJobEnded);
+        j.UnregisterJobStoppedCallback(OnJobStopped);
+        //j.UnregisterJobCompletedCallback(OnJobStopped);
 
         if (j != myJob)
         {

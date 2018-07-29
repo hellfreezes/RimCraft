@@ -1,12 +1,40 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 // Код этого класса нужно перевести полностью на LUA код. Чтобы потом закгружать его на лету в работающую программу
 // и главное - дать возможность писать аддоны к игре
 
-public static class FurnitureActions {
+public class FurnitureActions {
 
+    public FurnitureActions(string rawLuaCode)
+    {
+        Script myLuaScript = new Script();
+        DynValue result = myLuaScript.DoString(rawLuaCode);
+
+        if (result.Type == DataType.Number)
+        {
+            Debug.Log(result.Number);
+        }
+        else
+        {
+            Debug.Log(result.String);
+        }
+    }
+
+
+    public static void JobComlete_FurnitureBuilding(Job theJob)
+    {
+        WorldController.Instance.world.PlaceFurniture(theJob.jobObjectType, theJob.tile);
+        theJob.tile.pendingFurnitureJob = null;
+    }
+
+
+}
+
+
+/*
     // Обновлялка двери, вызывается каждый тик
     public static void Door_UpdateAction(Furniture furn, float deltaTime)
     {
@@ -74,14 +102,14 @@ public static class FurnitureActions {
         if (furn.tile.inventory != null && furn.tile.inventory.stackSize >= furn.tile.inventory.maxStackSize)
         {
             //Стак заполнен
-            furn.ClearJobs();
+            furn.CancelJobs();
             return;
         }
 
         if (furn.tile.inventory != null && furn.tile.inventory.stackSize == 0)
         {
             Debug.LogError("В зоне хранение есть стак число предметов которого равно нулю! Где то ошибка. Такой стак должен был быть уничтожен.");
-            furn.ClearJobs();
+            furn.CancelJobs();
             return;
         }
 
@@ -123,13 +151,14 @@ public static class FurnitureActions {
         // TODO: пока что полный запрет на переноску вещей из одного хранилища в другое. ИСПРАВИТЬ. Ввести приоритеты
         j.canPickupFromStockpile = false;
         j.RegisterWorkedCallback(Stockpile_JobWorked);
+        j.furniture = furn;
 
         furn.AddJob(j);
     }
 
     static void Stockpile_JobWorked(Job j)
     {
-        j.tile.furniture.ClearJobs();
+        j.CancelJob(); //RemoveJob(j); // <----- тут может быть косяк в RemoveJob
         // TODO: следующий код необходимо изменить как только я пойму каким образом говорить о всех типах предметов которые можно принести на эту зону
         //       одной строкой. Пока это цикл
 
@@ -137,7 +166,7 @@ public static class FurnitureActions {
         {
             if (inv.stackSize > 0)
             {
-                j.tile.world.inventoryManager.PlaceInventory(j.tile, inv);
+                World.current.inventoryManager.PlaceInventory(j.tile, inv);
                 return;
             }
         }
@@ -148,6 +177,9 @@ public static class FurnitureActions {
     {
         if (furn.tile.room.GetGasAmount("O2") < 0.20f)
         {// Ограничение давления кислорода в комнате
+
+            //TODO: изменить скорость заполнения учитывая размеры комнаты
+
             furn.tile.room.ChangeGas("O2", 0.01f * deltaTime);
 
             //TODO: потреблять электричество в процессе работы!
@@ -156,4 +188,59 @@ public static class FurnitureActions {
             // Нужно ли потреблять электричество в простое?
         }
     }
+
+    public static void MiningDroneStation_UpdateAction(Furniture furn, float deltaTime)
+    {
+        Tile spawnSpot = furn.GetSpawnSpotTile();
+
+        if (furn.JobCount() > 0)
+        {
+            // У сооружения уже есть задание
+
+            // Проверить не заполнен ли склад производимого продукта у данного сооружения
+
+            if (spawnSpot.inventory != null && spawnSpot.inventory.stackSize >= spawnSpot.inventory.maxStackSize)
+            {
+                // Остановить работу т.к. мы больше не можем складировать сюда
+                furn.CancelJobs();
+            }
+
+            return;
+        }
+
+        // Если мы добрались до этой точки, текущей работы нет
+        if (spawnSpot.inventory != null && spawnSpot.inventory.stackSize >= spawnSpot.inventory.maxStackSize)
+        {
+            // Минисклад полон. Не создавать новую работу!
+            return;
+        }
+
+        // Создаем новую работу
+
+        Tile jobSpot = furn.GetJobSpotTile();
+    
+
+        if (jobSpot.inventory != null && jobSpot.inventory.stackSize >= jobSpot.inventory.maxStackSize)
+        {
+            // Место сброса генерируемого инвентаря переполнено
+            return;
+        }
+
+        Job j = new Job(
+            jobSpot,
+            null,
+            MiningDroneStation_JobComplete,
+            1f,
+            null,
+            true
+            );
+
+        furn.AddJob(j);
+    }
+
+    public static void MiningDroneStation_JobComplete(Job j)
+    {
+        World.current.inventoryManager.PlaceInventory(j.furniture.GetSpawnSpotTile(), new Inventory("Steel Plate", 50, 20));
+    }
 }
+*/

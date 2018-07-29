@@ -160,7 +160,7 @@ public class MouseController : MonoBehaviour
                     Tile t = WorldController.Instance.world.GetTileAt(x, y);
                     if (t != null)
                     {
-                        if (buildModeController.buildModeIsObjects) // Если устанавливаем объект (фурнитуру)
+                        if (buildModeController.buildMode == BuildMode.FURNITURE) // Если устанавливаем объект (фурнитуру)
                         {
                             ShowFurnitureSpriteAtCoordinates(buildModeController.buildModeObjectType, t);
                         } else // устанавливаем всё остальное

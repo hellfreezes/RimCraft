@@ -28,11 +28,36 @@ public class Furniture : IXmlSerializable {
     // Перечень заданий связанных с данной конкретной фурнитурой
     List<Job> jobs;
 
+    // Локальные координаты в сооружении точки (где стоять) выполнения работы персонажем
+    // Точка может находится и вне тайла сооружения, но с привязкой к локальным координатам
+    public Vector2 jobSpotOffset = Vector2.zero;
+    // Координаты минисклада вещей которые (если) производит сооружение
+    public Vector2 jobSpawnSpotOffset = Vector2.zero;
+
     // Ссылка на базовый тайл под объектом. Хотя объект может занимать больше чем 1 тайл
     public Tile tile { get; protected set; }
 
     // Используется для определения спрайта, который нужно отобразить
     public string objectType { get; protected set; }
+
+    private string _name = null;
+    public string Name
+    {
+        get
+        {
+            if (_name == null || _name.Length == 0)
+            {
+                return objectType;
+            }
+
+            return _name;
+        }
+        set
+        {
+            _name = value;
+        }
+    }
+
     // Цена перемещения через этот объект.
     // 0 тут означает, что через этот объект нельзя пройти
     public float movementCost { get; protected set; }
@@ -48,6 +73,7 @@ public class Furniture : IXmlSerializable {
     public bool linksToNeighbour { get; protected set; }
 
     public Action<Furniture> cbOnChanged;
+    public Action<Furniture> cbOnRemoved;
 
     // Накопитель функций для проверки возможности установки фурнитуры
     Func<Tile, bool> funcPositionValidation;
@@ -69,6 +95,7 @@ public class Furniture : IXmlSerializable {
     {
         furnParameters = new Dictionary<string, float>();
         jobs = new List<Job>();
+        this.funcPositionValidation = this.DEFAULT__IsVaildPosition;
     }
 
     // Конструктор который копирует прототип - не использовать напрямую, если не используются субклассы
@@ -76,14 +103,17 @@ public class Furniture : IXmlSerializable {
     protected Furniture(Furniture other)
     {
         this.objectType = other.objectType;
+        this.Name = other.Name;
         this.movementCost = other.movementCost;
         this.roomEnclouser = other.roomEnclouser;
         this.Width = other.Width;
         this.Height = other.Height;
         this.tint = other.tint;
         this.linksToNeighbour = other.linksToNeighbour;
+        this.jobSpotOffset = other.jobSpotOffset;
+        this.jobSpawnSpotOffset = other.jobSpawnSpotOffset;
 
-       // Перенимаем кастомные параметры и методы
+        // Перенимаем кастомные параметры и методы
         this.furnParameters = new Dictionary<string, float>(other.furnParameters);
         this.jobs = new List<Job>();
 
@@ -151,22 +181,22 @@ public class Furniture : IXmlSerializable {
             int y = tile.Y;
 
             Tile t;
-            t = tile.world.GetTileAt(x, y - 1);
+            t = World.current.GetTileAt(x, y - 1);
             if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
-            t = tile.world.GetTileAt(x - 1, y);
+            t = World.current.GetTileAt(x - 1, y);
             if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
-            t = tile.world.GetTileAt(x, y + 1);
+            t = World.current.GetTileAt(x, y + 1);
             if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
             }
-            t = tile.world.GetTileAt(x + 1, y);
+            t = World.current.GetTileAt(x + 1, y);
             if (t != null && t.furniture != null && t.furniture.cbOnChanged != null && t.furniture.objectType == obj.objectType)
             {
                 t.furniture.cbOnChanged(t.furniture);
@@ -183,41 +213,49 @@ public class Furniture : IXmlSerializable {
 
     public void AddJob(Job j)
     {
+        j.furniture = this;
         jobs.Add(j);
-        tile.world.jobQueue.Enqueue(j);
+        j.RegisterJobStoppedCallback(OnJobStopped);
+        World.current.jobQueue.Enqueue(j);
     }
 
-    public void RemoveJob(Job j)
+    protected void RemoveJob(Job j)
     {
-        //jobs.Remove(j);
-        j.CancelJob();
-        tile.world.jobQueue.Remove(j);
+        j.UnregisterJobStoppedCallback(OnJobStopped);
+        jobs.Remove(j);
+        j.furniture = null;
     }
 
-    public void ClearJobs()
+    void OnJobStopped(Job j)
     {
-        foreach (Job j in jobs)
+        RemoveJob(j);
+    }
+
+    protected void ClearJobs()
+    {
+        Job[] jobs_arr = jobs.ToArray();
+        foreach (Job j in jobs_arr)
         {
             RemoveJob(j);
         }
-        jobs.Clear();
     }
 
+    public void CancelJobs()
+    {
+        Job[] jobs_arr = jobs.ToArray();
+        foreach (Job j in jobs_arr)
+        {
+            j.CancelJob();
+        }
+    }
+
+    // Является ли фурнитура зоной хранения
     public bool IsStockpile()
     {
         return objectType == "Stockpile";
     }
 
-    public void RegisterOnChangeCallback(Action<Furniture> callback)
-    {
-        cbOnChanged += callback;
-    }
-
-    public void UnregisterOnChangeCallback(Action<Furniture> callback)
-    {
-        cbOnChanged -= callback;
-    }
-
+    // Проверка на допустимость расположения фурнитуры в данном тайле
     public bool IsVaildPosition(Tile tile)
     {
         return funcPositionValidation(tile);
@@ -234,7 +272,7 @@ public class Furniture : IXmlSerializable {
         {
             for (int y_off = tile.Y; y_off < (tile.Y + Height); y_off++)
             {
-                Tile t = tile.world.GetTileAt(x_off, y_off);
+                Tile t = World.current.GetTileAt(x_off, y_off);
 
                 // Проверяет можно ли ипользовать тайл для установки фурнитуры
                 if (t.Type != TileType.Floor)
@@ -251,6 +289,102 @@ public class Furniture : IXmlSerializable {
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Демонтаж фурнитуры
+    /// </summary>
+    public void Decostruct()
+    {
+        //Debug.Log("Попытка разобрать объект");
+        tile.UnplaceFurniture(); // Очистка тайла от фурнитуры
+
+        if (cbOnRemoved != null)
+        {
+            // Выполняем все методы подписчики
+            cbOnRemoved(this);
+        }
+
+        if (roomEnclouser)
+        {
+            Room.DoRoomFloodFill(this.tile);
+        }
+
+        World.current.InvalidateTileGraph();
+        // Основная инфа и ссылки на фурнитуру удалены.
+        // Надо удалить подписки на события
+
+    }
+
+    /// <summary>
+    /// Получает кастомный параметр из словаря параметров по ключевой строке
+    /// </summary>
+    /// <param name="key">ключевая строка</param>
+    /// <param name="default_value">значение которое будет возвращено если ключевой строки не найдено в словаре</param>
+    /// <returns></returns>
+    public float GetParameter(string key, float default_value = 0)
+    {
+        if (furnParameters.ContainsKey(key) == false)
+            return default_value;
+        return furnParameters[key];
+    }
+
+    public Tile GetJobSpotTile()
+    {
+        return World.current.GetTileAt((int)(tile.X + jobSpotOffset.x), (int)(tile.Y + jobSpotOffset.y));
+    }
+
+    public Tile GetSpawnSpotTile()
+    {
+        return World.current.GetTileAt((int)(tile.X + jobSpawnSpotOffset.x), (int)(tile.Y + jobSpawnSpotOffset.y));
+    }
+
+    public void SetParameter(string key, float value)
+    {
+        furnParameters[key] = value;
+    }
+
+    public void ChangeParameter(string key, float value)
+    {
+        if (furnParameters.ContainsKey(key) == false)
+            furnParameters[key] = value;
+
+        furnParameters[key] += value;
+    }
+
+    public void RegisterOnChangeCallback(Action<Furniture> callback)
+    {
+        cbOnChanged += callback;
+    }
+
+    public void UnregisterOnChangeCallback(Action<Furniture> callback)
+    {
+        cbOnChanged -= callback;
+    }
+
+    public void RegisterOnRemoveCallback(Action<Furniture> callback)
+    {
+        cbOnRemoved += callback;
+    }
+
+    public void UnregisterOnRemoveCallback(Action<Furniture> callback)
+    {
+        cbOnRemoved -= callback;
+    }
+
+    /// <summary>
+    /// Регистрирует метод для фурнитуры, который будет вызываться каждый апдейт
+    /// Нужно будет изменить такой способ регистрации метода, когда будем использовать LUA
+    /// </summary>
+    /// <param name="a"></param>
+    public void RegisterUpdateAction(Action<Furniture, float> a)
+    {
+        updateActions += a;
+    }
+
+    public void UnregisterUpdateAction(Action<Furniture, float> a)
+    {
+        updateActions -= a;
     }
 
     //public bool __IsVaildPositionForDoor(Tile tile)
@@ -273,11 +407,80 @@ public class Furniture : IXmlSerializable {
         throw new NotImplementedException();
     }
 
+    public void ReadXmlPrototyper(XmlReader readerParent)
+    {
+        objectType = readerParent.GetAttribute("objectType");
+
+        XmlReader reader = readerParent.ReadSubtree();
+
+        while (reader.Read())
+        {
+            switch (reader.Name)
+            {
+                case "Name":
+                    reader.Read();
+                    Name = reader.ReadContentAsString();
+                    break;
+                case "MovementCost":
+                    reader.Read();
+                    movementCost = reader.ReadContentAsFloat();
+                    break;
+                case "Width":
+                    reader.Read();
+                    Width = reader.ReadContentAsInt();
+                    break;
+                case "Height":
+                    reader.Read();
+                    Height = reader.ReadContentAsInt();
+                    break;
+                case "LinksToNeighbours":
+                    reader.Read();
+                    linksToNeighbour = reader.ReadContentAsBoolean();
+                    break;
+                case "EnclosesRooms":
+                    reader.Read();
+                    roomEnclouser = reader.ReadContentAsBoolean();
+                    break;
+                case "OnUpdate":
+                    string functionName = reader.GetAttribute("functionName");
+                     break;
+                case "Params":
+                    ReadXmlParams(reader);
+                    break;
+                case "BuildingJob":
+                    float jobTime = float.Parse(reader.GetAttribute("jobTime"));
+                    List<Inventory> invs = new List<Inventory>();
+                    XmlReader invs_reader = reader.ReadSubtree();
+                    while(invs_reader.Read())
+                    {
+                        if (invs_reader.Name == "Inventory")
+                        {
+                            Inventory inv = new Inventory(
+                                invs_reader.GetAttribute("objectType"),
+                                int.Parse(invs_reader.GetAttribute("amount")),
+                                0
+                                );
+                            invs.Add(inv);
+                        }
+                    }
+
+                    Job j = new Job(null, objectType, FurnitureActions.JobComlete_FurnitureBuilding, jobTime, invs.ToArray());
+                    World.current.SetFurnitureJobPrototype(j, this);
+                    break;
+            }
+        }
+    }
+
     public void ReadXml(XmlReader reader)
     {
         //Все остальное читается в World
         //movementCost = float.Parse(reader.GetAttribute("MovementCost"));
 
+        ReadXmlParams(reader);
+    }
+
+    public void ReadXmlParams(XmlReader reader)
+    {
         if (reader.ReadToDescendant("Param"))
         {
             do
@@ -306,47 +509,5 @@ public class Furniture : IXmlSerializable {
             writer.WriteAttributeString("value", furnParameters[k].ToString());
             writer.WriteEndElement();
         }
-    }
-
-
-    /// <summary>
-    /// Получает кастомный параметр из словаря параметров по ключевой строке
-    /// </summary>
-    /// <param name="key">ключевая строка</param>
-    /// <param name="default_value">значение которое будет возвращено если ключевой строки не найдено в словаре</param>
-    /// <returns></returns>
-    public float GetParameter(string key, float default_value = 0)
-    {
-        if (furnParameters.ContainsKey(key) == false)
-            return default_value;
-        return furnParameters[key];
-    }
-
-    public void SetParameter(string key, float value)
-    {
-        furnParameters[key] = value;
-    }
-
-    public void ChangeParameter(string key, float value)
-    {
-        if (furnParameters.ContainsKey(key) == false)
-            furnParameters[key] = value;
-
-        furnParameters[key] += value;
-    }
-
-    /// <summary>
-    /// Регистрирует метод для фурнитуры, который будет вызываться каждый апдейт
-    /// Нужно будет изменить такой способ регистрации метода, когда будем использовать LUA
-    /// </summary>
-    /// <param name="a"></param>
-    public void RegisterUpdateAction(Action<Furniture, float> a)
-    {
-        updateActions += a;
-    }
-
-    public void UnregisterUpdateAction(Action<Furniture, float> a)
-    {
-        updateActions -= a;
     }
 }

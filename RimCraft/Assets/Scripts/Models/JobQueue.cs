@@ -9,6 +9,11 @@ public class JobQueue {
 
     Action<Job> cbJobCreated;
 
+    public int Count
+    {
+        get { return jobQueue.Count; }
+    }
+
     public JobQueue()
     {
         jobQueue = new Queue<Job>();
@@ -16,6 +21,7 @@ public class JobQueue {
 
     public void Enqueue(Job j)
     {
+        //Debug.Log("Adding job to queue. Existing queue size: " + jobQueue.Count);
         if (j.jobTime < 0)
         {
             // Работа с продолжительностью отрицательной - это работа которая выполняется мнгновенно после ее создания
@@ -48,7 +54,7 @@ public class JobQueue {
 
         if (jobs.Contains(j) == false)
         {
-            // Debug.LogError("Попытка удалить из очереди работы, которой там нет");
+            // Debug.LogError("Попытка удалить из очереди работу, которой там нет");
             // Скорее всего эта работа не в очереди потому, что какой то из персонажей над ней работает
             return;
         }

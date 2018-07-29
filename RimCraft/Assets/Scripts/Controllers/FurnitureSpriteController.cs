@@ -86,6 +86,7 @@ public class FurnitureSpriteController : MonoBehaviour {
         // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 
         // Если событие изменения происходит в tile_data, то вызывается метод OnTileTypeChanged
         furn.RegisterOnChangeCallback(OnFurnitureChanged);
+        furn.RegisterOnRemoveCallback(OnFurnitureRemoved);
     }
 
     // Подписчик на событие в Furniture, которое вызывается когда что либо в фурнитуре меняется
@@ -101,6 +102,21 @@ public class FurnitureSpriteController : MonoBehaviour {
         GameObject furn_go = furnitureGameObjectMap[furn];
         furn_go.GetComponent<SpriteRenderer>().sprite = GetSpriteForFurniture(furn);
         furn_go.GetComponent<SpriteRenderer>().color = furn.tint;
+    }
+
+    // Подписчик только что был уведомлен о том, что фурнитура была удалена из игры
+    // Визуальная часть должна быть обновлена
+    void OnFurnitureRemoved(Furniture furn)
+    {
+        if (furnitureGameObjectMap.ContainsKey(furn) == false)
+        {
+            Debug.LogError("Попытка удалить со сцены фурнитуру, которой нет в словаре");
+            return;
+        }
+
+        GameObject furn_go = furnitureGameObjectMap[furn];
+        Destroy(furn_go);
+        furnitureGameObjectMap.Remove(furn);
     }
 
     // Если графика спрайта имеет зависимость от соседних спрайтов, то вычисляем

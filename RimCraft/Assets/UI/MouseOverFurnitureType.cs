@@ -35,7 +35,7 @@ public class MouseOverFurnitureType : MonoBehaviour {
 
         if (t.furniture != null)
         {
-            s = t.furniture.objectType.ToString();
+            s = t.furniture.Name;
         }
         text.text = "Furniture: " + s;
 	}

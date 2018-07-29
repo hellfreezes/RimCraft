@@ -56,8 +56,8 @@ public class JobSpriteController : MonoBehaviour {
         {
             // По умолчанию дверь между EW
             // Проверить если дверь между стен SN, то повернуть на 90гр
-            Tile northTile = job.tile.world.GetTileAt(job.tile.X, job.tile.Y + 1);
-            Tile southTile = job.tile.world.GetTileAt(job.tile.X, job.tile.Y - 1);
+            Tile northTile = World.current.GetTileAt(job.tile.X, job.tile.Y + 1);
+            Tile southTile = World.current.GetTileAt(job.tile.X, job.tile.Y - 1);
 
             if (northTile != null && southTile != null &&
                 northTile.furniture != null && southTile.furniture != null &&
@@ -68,8 +68,8 @@ public class JobSpriteController : MonoBehaviour {
             }
         }
 
-        job.RegisterJobCompleteCallback(OnJobEnded);
-        job.RegisterJobCancelCallback(OnJobEnded);
+        job.RegisterJobCompletedCallback(OnJobEnded);
+        job.RegisterJobStoppedCallback(OnJobEnded);
 	}
 
     void OnJobEnded(Job job)
@@ -77,8 +77,8 @@ public class JobSpriteController : MonoBehaviour {
         //Удалить спрайт
         GameObject job_go = jobGameObjectMap[job];
 
-        job.UnregisterJobCancelCallback(OnJobEnded);
-        job.UnregisterJobCompleteCallback(OnJobEnded);
+        job.UnregisterJobStoppedCallback(OnJobEnded);
+        job.UnregisterJobCompletedCallback(OnJobEnded);
 
         Destroy(job_go);
     }

@@ -3,8 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+public enum BuildMode
+{
+    FLOOR,
+    FURNITURE,
+    DECONSTRUCT
+}
+
 public class BuildModeController : MonoBehaviour {
-    public bool buildModeIsObjects = false;            // Устанавливаем ли мы объекты или правим тайлы
+    public BuildMode buildMode = BuildMode.FLOOR;            // Устанавливаем ли мы объекты или правим тайлы
     TileType buildModeTile = TileType.Floor;
 
 
@@ -76,7 +83,7 @@ public class BuildModeController : MonoBehaviour {
     /// <returns></returns>
     public bool IsObjectDraggable()
     {
-        if (buildModeIsObjects == false)
+        if (buildMode == BuildMode.FLOOR || buildMode == BuildMode.DECONSTRUCT)
         {
             // пол можно перетаскивать
             return true;
@@ -88,7 +95,7 @@ public class BuildModeController : MonoBehaviour {
 
     public void SetMode_BuildFloor()
     {
-        buildModeIsObjects = false;
+        buildMode = BuildMode.FLOOR;
         buildModeTile = TileType.Floor;
 
         mouseController.StartBuildMode();
@@ -96,7 +103,7 @@ public class BuildModeController : MonoBehaviour {
 
     public void SetMode_Bulldozer()
     {
-        buildModeIsObjects = false;
+        buildMode = BuildMode.FLOOR;
         buildModeTile = TileType.Empty;
 
         mouseController.StartBuildMode();
@@ -104,9 +111,15 @@ public class BuildModeController : MonoBehaviour {
 
     public void SetMode_BuildFurniture(string objectType)
     {
-        buildModeIsObjects = true;
+        buildMode = BuildMode.FURNITURE;
         buildModeObjectType = objectType;
 
+        mouseController.StartBuildMode();
+    }
+
+    public void SetMode_Deconstruct()
+    {
+        buildMode = BuildMode.DECONSTRUCT;
         mouseController.StartBuildMode();
     }
 
@@ -121,7 +134,7 @@ public class BuildModeController : MonoBehaviour {
 
     public void DoBuild(Tile t)
     {
-        if (buildModeIsObjects == true)
+        if (buildMode == BuildMode.FURNITURE) // Установка фурнитуры
         {
             // Режим установки объектов.
             // Устанавливаем объект и назначаем тайл для него
@@ -149,7 +162,7 @@ public class BuildModeController : MonoBehaviour {
                 }
                 else
                 {
-                    Debug.LogError("Не задан прототип работы для создаваемой фурнитуры: "+ furnitureType+". Применен дефолтный прототип.");
+                    Debug.Log("Не задан прототип работы для создания сооружения: "+ furnitureType+". Применен дефолтный прототип.");
                     j = new Job(t, furnitureType, FurnitureActions.JobComlete_FurnitureBuilding,
                     0.1f,
                     null);
@@ -160,7 +173,7 @@ public class BuildModeController : MonoBehaviour {
                 // FIXME: Это ручной способ. Надо чтобы всё происходило автоматически
                 t.pendingFurnitureJob = j;
 
-                j.RegisterJobCancelCallback((theJob) => { theJob.tile.pendingFurnitureJob = null; });
+                j.RegisterJobStoppedCallback((theJob) => { theJob.tile.pendingFurnitureJob = null; });
 
                 //Временное решение: мнгновенное выполнение работы
                 WorldController.Instance.world.jobQueue.Enqueue(j);
@@ -168,11 +181,21 @@ public class BuildModeController : MonoBehaviour {
                 //Debug.Log("Размер очереди на выполнение работ: " + WorldController.Instance.world.jobQueue.Count);
             }
         }
-        else
+        else if (buildMode == BuildMode.FLOOR) // Установка пола
         {
             // Режим изменения тайлов
 
             t.Type = buildModeTile;
+        }
+        else if (buildMode == BuildMode.DECONSTRUCT) // Демонтаж фурнитуры
+        {
+            if (t.furniture != null)
+            {
+                t.furniture.Decostruct(); // Вызываем встроенный метод в фурнитуру
+            }
+        } else
+        {
+            Debug.LogError("Неустановленный режим");
         }
     }
 }

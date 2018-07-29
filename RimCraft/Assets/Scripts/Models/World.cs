@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
@@ -12,6 +13,8 @@ using UnityEngine;
  * Независимый от Unity класс работающий с миром и хранящий ссылки на его составные части
  */
 public class World : IXmlSerializable {
+    public static World current { get; protected set; }
+
     //Двумерная база данных класса
     Tile[,] tiles;
     // Список персонажей
@@ -71,9 +74,28 @@ public class World : IXmlSerializable {
         CreateCharacter(GetTileAt(Width / 2, Height / 2));
     }
 
+    /// <summary>
+    /// Возвращает комнату ваакум (дефолтная комната. Существует всегда, не может быть удалена)
+    /// </summary>
+    /// <returns></returns>
     public Room GetOutsideRoom()
     {
         return rooms[0];
+    }
+
+    public int GetRoomId(Room r)
+    {
+        if (r == null)
+            return -1;
+
+        return rooms.IndexOf(r);
+    }
+
+    public Room GetRoomFromId(int id)
+    {
+        if (id < 0 || id > rooms.Count - 1)
+            return null;
+        return rooms[id];
     }
 
     /// <summary>
@@ -87,7 +109,7 @@ public class World : IXmlSerializable {
             Debug.LogError("Попытка удалить дефолтную комнату");
             return;
         }
-        r.UnAssignAllTiles();
+        r.ReturnTilesToOutsideRoom();
         rooms.Remove(r);
     }
 
@@ -98,6 +120,9 @@ public class World : IXmlSerializable {
 
     void SetupWorld(int width, int height)
     {
+        current = this; // Мир у нас один. И этот мир и есть текущий мир. 
+                        // А current - это статический доступ к этому единственному экземпляру
+
         jobQueue = new JobQueue(); // Создаем новую очередь работ
 
         this.width = width;
@@ -107,14 +132,14 @@ public class World : IXmlSerializable {
         tiles = new Tile[width, height];
 
         rooms = new List<Room>();
-        rooms.Add(new Room(this)); // улица - внешнее пространство
+        rooms.Add(new Room()); // улица - внешнее пространство
 
         //Заполняется новыми тайлами
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                tiles[x, y] = new Tile(this, x, y);
+                tiles[x, y] = new Tile(x, y);
                 tiles[x, y].RegisterTileTypeChangeCallBack(OnTileChanged);
 
                 tiles[x, y].room = GetOutsideRoom(); // комната по умолчанию - внешнее пространство
@@ -141,6 +166,12 @@ public class World : IXmlSerializable {
         {
             furn.Update(deltaTime);
         }
+
+        // FIXME: ИСПОЛЬЗУЕТСЯ ДЛЯ ДЕБАГА - УДАЛИТЬ
+        //if (Input.GetKeyDown(KeyCode.Space))
+        //{
+        //    Debug.Log("Количество заданий в очереди: " + jobQueue.Count);
+        //}
     }
 
     public Character CreateCharacter(Tile t)
@@ -155,38 +186,110 @@ public class World : IXmlSerializable {
         return c;
     }
 
+    public void SetFurnitureJobPrototype(Job j, Furniture f)
+    {
+        furnitureJobPrototypes[f.objectType] = j;
+    }
+
+    void LoadFurnitureLua()
+    {
+        string filePath = Path.Combine(Application.streamingAssetsPath, "LUA");
+        filePath = Path.Combine(filePath, "Furniture.lua");
+
+        string myLuaCode = File.ReadAllText(filePath);
+
+        if (myLuaCode == null)
+        {
+            Debug.LogError("Ошибка загрузки LUA кода!");
+            return;
+        }
+
+        FurnitureActions fa = new FurnitureActions(myLuaCode);
+    }
+
     void CreateFurniturePrototype()
     {
-        /* Необходимо заменить этот метод на метод, который будет брать данные о прототипах из XML файлов */
+        LoadFurnitureLua();
 
         furniturePrototypes = new Dictionary<string, Furniture>();
         furnitureJobPrototypes = new Dictionary<string, Job>();
 
-        // Прототип стандартных стен ----------------------------------
-        Furniture wallPrototype = new Furniture("Wall", 0, 1, 1, true, true);
-        furniturePrototypes.Add("Wall", wallPrototype);
-        furnitureJobPrototypes.Add("Wall", new Job(null, "Wall", FurnitureActions.JobComlete_FurnitureBuilding, 1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) }));
+        // Загружаем данные о сооружениях из XML файла
+        // Возможно следующий код лучше вынести в отдельный класс хэлпер а не заставлять класс контролирующий
+        // мир работать с файловой системой.
 
-        // Прототип генератора кислорода ---------------------------------
-        Furniture oxygenGeneratorPrototype = new Furniture("Oxygen Generator", 10f, 2, 2, false, false);
-        furniturePrototypes.Add("Oxygen Generator", oxygenGeneratorPrototype);
-        furniturePrototypes["Oxygen Generator"].RegisterUpdateAction(FurnitureActions.OxygenGenerator_UpdateAction);
+        string filePath = Path.Combine(Application.streamingAssetsPath, "Data");
+        filePath = Path.Combine(filePath, "Furniture.xml");
 
-        // Прототип стандратной зоны хранения--------------------------
-        Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, true, false);
-        furniturePrototypes.Add("Stockpile", stockpilePrototype);
-        furniturePrototypes["Stockpile"].RegisterUpdateAction(FurnitureActions.Stockpile_UpdateAction);
-        furniturePrototypes["Stockpile"].tint = new Color32(180, 30, 30, 255);
-        furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
+        string furnitureXmlText = File.ReadAllText(filePath);
 
-        // Прототип стадартной двери ------------------------------
-        Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
-        furniturePrototypes.Add("Door", doorPrototype);
-        furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр
-        furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
-        furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
-        furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
+        XmlTextReader reader = new XmlTextReader(new StringReader(furnitureXmlText));
+
+        if (reader.ReadToDescendant("Furnitures"))
+        {
+            if (reader.ReadToDescendant("Furniture"))
+            {
+                do
+                {
+                    Furniture furn = new Furniture();
+                    furn.ReadXmlPrototyper(reader);
+
+                    furniturePrototypes[furn.objectType] = furn;
+                } while (reader.ReadToNextSibling("Furniture"));
+            }
+            else
+            {
+                Debug.LogError("Ошибка чтения XML файла. Не найден элемент 'Furniture'");
+            }
+        } else
+        {
+            Debug.LogError("Ошибка чтения XML файла. Не найден элемент 'Furnitures'");
+        }
+
+        // Позднее загрузажть из LUA
+        //furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
+        //furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
     }
+
+    //void CreateFurniturePrototype()
+    //{
+    //    /* Необходимо заменить этот метод на метод, который будет брать данные о прототипах из XML файлов */
+
+    //    furniturePrototypes = new Dictionary<string, Furniture>();
+    //    furnitureJobPrototypes = new Dictionary<string, Job>();
+
+    //    // Прототип стандартных стен ----------------------------------
+    //    Furniture wallPrototype = new Furniture("furn_SteelWall", 0, 1, 1, true, true);
+    //    furniturePrototypes.Add("furn_SteelWall", wallPrototype);
+    //    furniturePrototypes["furn_SteelWall"].Name = "Basic Wall";
+    //    furnitureJobPrototypes.Add("furn_SteelWall", new Job(null, "furn_SteelWall", FurnitureActions.JobComlete_FurnitureBuilding, 0.1f, new Inventory[] { new Inventory("Steel Plate", 5, 0) }));
+
+    //    // Прототип генератора кислорода ---------------------------------
+    //    Furniture oxygenGeneratorPrototype = new Furniture("Oxygen Generator", 10f, 2, 2, false, false);
+    //    furniturePrototypes.Add("Oxygen Generator", oxygenGeneratorPrototype);
+    //    furniturePrototypes["Oxygen Generator"].RegisterUpdateAction(FurnitureActions.OxygenGenerator_UpdateAction);
+
+    //    // Прототип стандратной зоны хранения--------------------------
+    //    Furniture stockpilePrototype = new Furniture("Stockpile", 1, 1, 1, true, false);
+    //    furniturePrototypes.Add("Stockpile", stockpilePrototype);
+    //    furniturePrototypes["Stockpile"].RegisterUpdateAction(FurnitureActions.Stockpile_UpdateAction);
+    //    furniturePrototypes["Stockpile"].tint = new Color32(180, 30, 30, 255);
+    //    furnitureJobPrototypes.Add("Stockpile", new Job(null, "Stockpile", FurnitureActions.JobComlete_FurnitureBuilding, -1f, null));
+
+    //    // Прототип стадартной двери ------------------------------
+    //    Furniture doorPrototype = new Furniture("Door", 1, 1, 1, false, true);
+    //    furniturePrototypes.Add("Door", doorPrototype);
+    //    furniturePrototypes["Door"].SetParameter("openness", 0f); // кастомный параметр
+    //    furniturePrototypes["Door"].SetParameter("is_opening", 0f); // кастомный параметр
+    //    furniturePrototypes["Door"].RegisterUpdateAction(FurnitureActions.Door_UpdateAction); // кастомный метод
+    //    furniturePrototypes["Door"].isEnterable = FurnitureActions.Door_IsEnterable; // кастомные условия доступности
+
+    //    // Прототип шахты -----------------------------------------
+    //    Furniture miningDroneStationPrototype = new Furniture("Mining Drone Station", 1f, 3, 3, false, false); // Вообще-то 3х2, сделать потом
+    //    furniturePrototypes.Add("Mining Drone Station", miningDroneStationPrototype);
+    //    furniturePrototypes["Mining Drone Station"].jobSpotOffset = new Vector2(1, 0);
+    //    furniturePrototypes["Mining Drone Station"].RegisterUpdateAction(FurnitureActions.MiningDroneStation_UpdateAction);
+    //}
 
 
     //ВРЕМЕННАЯ
@@ -205,17 +308,13 @@ public class World : IXmlSerializable {
             {
                 tiles[x, y].Type = TileType.Floor;
 
-
                 if (x == l || x == (l + 9) || y == b || y == (b + 9))
                 {
                     if (x != (l + 9) && y != (b + 4))
                     {
-                        PlaceFurniture("Wall", tiles[x, y]);
+                        PlaceFurniture("furn_SteelWall", tiles[x, y]);
                     }
                 }
-
-
-
             }
         }
 
@@ -256,7 +355,7 @@ public class World : IXmlSerializable {
         }
     }
 
-    public Furniture PlaceFurniture(string objectType, Tile t)
+    public Furniture PlaceFurniture(string objectType, Tile t, bool doRoomFloodFill = true)
     {
         // Пока метод принимает 1 тайл для расположения - надо исправить это позже
         if (furniturePrototypes.ContainsKey(objectType) == false)
@@ -272,13 +371,14 @@ public class World : IXmlSerializable {
             return null;
         }
 
+        furn.RegisterOnRemoveCallback(OnFurnitureRemoved);
         // Добавляем созданную фурнитуру в лист фурнитур
         furnitures.Add(furn);
 
         // Вероятно надо вычислить образование комнат
-        if (furn.roomEnclouser)
+        if (doRoomFloodFill && furn.roomEnclouser)
         {
-            Room.DoRoomFloodFill(furn);
+            Room.DoRoomFloodFill(furn.tile);
         }
 
         if (cbFurnitureCreated != null)
@@ -295,6 +395,16 @@ public class World : IXmlSerializable {
         }
 
         return furn;
+    }
+
+    /// <summary>
+    /// Метод подписчик на демонтаж фурнитуры.
+    /// Вызывается из Furniture
+    /// </summary>
+    /// <param name="furn"></param>
+    public void OnFurnitureRemoved(Furniture furn)
+    {
+        furnitures.Remove(furn);
     }
 
     public void RegisterCharacterCreated(Action<Character> callback)
@@ -412,6 +522,9 @@ public class World : IXmlSerializable {
         {
             switch(reader.Name)
             {
+                case "Rooms":
+                    ReadXml_Rooms(reader);
+                    break;
                 case "Tiles": // Доходя до секции Тайлы, вызываем:
                     ReadXml_Tiles(reader);
                     break;
@@ -426,22 +539,22 @@ public class World : IXmlSerializable {
         //DEBUG - УДАЛИТЬ
         // Создаем предмет инвентаря чисто для тестов
         Inventory inv = new Inventory("Steel Plate", 50, 50);
-        Tile t = GetTileAt(Width / 2, Height / 2);
+        Tile t = GetTileAt(Width / 2, Height / 2 - 1);
         inventoryManager.PlaceInventory(t, inv);
         if (cbInventoryCreated != null)
         {
             cbInventoryCreated(inv);
         }
 
-        inv = new Inventory("Steel Plate", 50, 4);
-        t = GetTileAt(Width / 2 - 2, Height / 2 - 3);
+        inv = new Inventory("Steel Plate", 50, 50);
+        t = GetTileAt(Width / 2 - 1, Height / 2 - 3);
         inventoryManager.PlaceInventory(t, inv);
         if (cbInventoryCreated != null)
         {
             cbInventoryCreated(inv);
         }
 
-        inv = new Inventory("Steel Plate", 50, 2);
+        inv = new Inventory("Steel Plate", 50, 50);
         t = GetTileAt(Width / 2 + 2, Height / 2 - 3);
         inventoryManager.PlaceInventory(t, inv);
         if (cbInventoryCreated != null)
@@ -477,9 +590,29 @@ public class World : IXmlSerializable {
                 int x = int.Parse(reader.GetAttribute("X"));
                 int y = int.Parse(reader.GetAttribute("Y"));
 
-                Furniture furn = PlaceFurniture(reader.GetAttribute("ObjectType"), tiles[x, y]);
+                Furniture furn = PlaceFurniture(reader.GetAttribute("ObjectType"), tiles[x, y], false);
                 furn.ReadXml(reader);
             } while (reader.ReadToNextSibling("Furniture"));
+
+            // Теперь будем получать информацию о комнатах из загрузочного файла, на не генерировать налету
+            //foreach (Furniture furn in furnitures)
+            //{
+            //    Room.DoRoomFloodFill(furn.tile, true);
+            //}
+        }
+    }
+
+    void ReadXml_Rooms(XmlReader reader)
+    {
+        if (reader.ReadToDescendant("Room"))
+        {
+            do
+            {
+                Room r = new Room();
+                rooms.Add(r);
+                r.ReadXml(reader);
+
+            } while (reader.ReadToNextSibling("Room"));
         }
     }
 
@@ -501,11 +634,25 @@ public class World : IXmlSerializable {
 
     public void WriteXml(XmlWriter writer)
     {
-        Debug.Log("World проходит сериализацию...");
+        //Debug.Log("World проходит сериализацию...");
         //throw new NotImplementedException();
         // Перечислям все данные которые должны быть сохранены
         writer.WriteAttributeString("Width", Width.ToString());
         writer.WriteAttributeString("Height", Height.ToString());
+
+        //Сохраняем комнаты
+        writer.WriteStartElement("Rooms");
+        foreach (Room r in rooms)
+        {
+            if (r == GetOutsideRoom())
+                continue; // Не сохраняем пустоту
+
+            writer.WriteStartElement("Room");
+            r.WriteXml(writer);
+            writer.WriteEndElement();
+        }
+        writer.WriteEndElement();
+
         //Сохраняем тайлы
         writer.WriteStartElement("Tiles");
         for (int x = 0; x < Width; x++)
@@ -521,7 +668,7 @@ public class World : IXmlSerializable {
             }
         }
         writer.WriteEndElement();
-        //Сохраняем фурнитуру
+        //Сохраняем сооружения
         writer.WriteStartElement("Furnitures");
         foreach (Furniture furn in furnitures)
         {
