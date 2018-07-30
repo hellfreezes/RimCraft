@@ -21,7 +21,8 @@ public class Furniture : IXmlSerializable {
     /// В данном случае float - это deltaTime.
     /// В вызываемом методе могут быть использованы параметры из словаря furnParameters
     /// </summary>
-    protected Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
+    //protected Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
+    protected List<string> updateActions; // строковые наименования функций полученных из LUA кода
 
     public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
 
