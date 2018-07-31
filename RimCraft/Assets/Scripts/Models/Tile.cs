@@ -5,6 +5,7 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 
 // Базовый тип тайла. Первый слой - поверхность
@@ -18,6 +19,7 @@ public enum Enterablylity { Yes, Never, Soon};
  * Будет содержать информацию о поверхности, ссылться на строения или вещи, хранить качество окружающей
  * среды
  */
+[MoonSharpUserData]
 public class Tile : IXmlSerializable {
     TileType type = TileType.Empty;
     // Делегат хранящий в себе методы принимающие аргумент Tile

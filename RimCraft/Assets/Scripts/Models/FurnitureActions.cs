@@ -8,29 +8,51 @@ using MoonSharp.Interpreter;
 
 public class FurnitureActions {
 
-    public FurnitureActions(string rawLuaCode)
-    {
-        Script myLuaScript = new Script();
-        DynValue result = myLuaScript.DoString(rawLuaCode);
+    static FurnitureActions instance;
+    Script myLuaScript;
 
-        if (result.Type == DataType.Number)
+    public static FurnitureActions Instance
+    {
+        get
         {
-            Debug.Log(result.Number);
-        }
-        else
-        {
-            Debug.Log(result.String);
+            return instance;
         }
     }
 
+    public FurnitureActions(string rawLuaCode)
+    {
+        // Зарегистрировать классы в MoonSharp
+        UserData.RegisterAssembly();
+
+        instance = this;
+
+        myLuaScript = new Script();
+        myLuaScript.DoString(rawLuaCode);
+    }
+
+    public void CallFunctionsWithFurniture(string[] functionNames, Furniture furn, float deltaTime)
+    {
+        foreach (string functionName in functionNames)
+        {
+            object func = myLuaScript.Globals[functionName];
+
+            if (func == null)
+            {
+                Debug.LogError(functionName + " не является LUA функцией");
+                return;
+            }
+
+            DynValue result = myLuaScript.Call(func, furn, deltaTime);
+            if (result.Type == DataType.String)
+                Debug.Log(result.String);
+        }
+    }
 
     public static void JobComlete_FurnitureBuilding(Job theJob)
     {
         WorldController.Instance.world.PlaceFurniture(theJob.jobObjectType, theJob.tile);
         theJob.tile.pendingFurnitureJob = null;
     }
-
-
 }
 
 

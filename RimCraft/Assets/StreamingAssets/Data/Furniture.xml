@@ -25,6 +25,7 @@
 		<Height>1</Height>
 		<LinksToNeighbours>false</LinksToNeighbours>
 		<EnclosesRooms>true</EnclosesRooms>
+    <OnUpdate functionName="OnUpdate_Door"/>
 		<Params>
 			<Param name="openness" value="0"/>
 			<Param name="is_opening" value="0"/>

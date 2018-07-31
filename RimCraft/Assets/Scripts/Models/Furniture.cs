@@ -5,8 +5,10 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 // Это объекты, которые можно установить. Такие вещи например как: двери, стены, мебель и тп
+[MoonSharpUserData]
 public class Furniture : IXmlSerializable {
 
     /// <summary>
@@ -87,13 +89,14 @@ public class Furniture : IXmlSerializable {
         //Обновляем все загруженные в эту фурнитуру действия (точнее наверное обновляем все ее кастомные параметры furnParametrs)
         if (updateActions != null)
         {
-            updateActions(this, deltaTime);
+            FurnitureActions.Instance.CallFunctionsWithFurniture(updateActions.ToArray(), this, deltaTime);
         }
     }
 
     // Пустой контруктор нужен только для сериализация.
     public Furniture()
     {
+        updateActions = new List<string>();
         furnParameters = new Dictionary<string, float>();
         jobs = new List<Job>();
         this.funcPositionValidation = this.DEFAULT__IsVaildPosition;
@@ -119,7 +122,7 @@ public class Furniture : IXmlSerializable {
         this.jobs = new List<Job>();
 
         if (other.updateActions != null)
-            this.updateActions = (Action<Furniture, float>)other.updateActions.Clone();
+            this.updateActions = new List<string>(other.updateActions);
         if (other.isEnterable != null)
             this.isEnterable = (Func<Furniture, Enterablylity>)other.isEnterable.Clone();
         if (other.funcPositionValidation != null)
@@ -151,6 +154,8 @@ public class Furniture : IXmlSerializable {
         this.Width = width;
         this.Height = height;
         this.linksToNeighbour = linksToNeighbour;
+
+        this.updateActions = new List<string>();
 
         this.funcPositionValidation = this.DEFAULT__IsVaildPosition;
     }
@@ -378,14 +383,14 @@ public class Furniture : IXmlSerializable {
     /// Нужно будет изменить такой способ регистрации метода, когда будем использовать LUA
     /// </summary>
     /// <param name="a"></param>
-    public void RegisterUpdateAction(Action<Furniture, float> a)
+    public void RegisterUpdateAction(string luaFunctionName)
     {
-        updateActions += a;
+        updateActions.Add(luaFunctionName);
     }
 
-    public void UnregisterUpdateAction(Action<Furniture, float> a)
+    public void UnregisterUpdateAction(string luaFunctionName)
     {
-        updateActions -= a;
+        updateActions.Remove(luaFunctionName);
     }
 
     //public bool __IsVaildPositionForDoor(Tile tile)
@@ -444,6 +449,7 @@ public class Furniture : IXmlSerializable {
                     break;
                 case "OnUpdate":
                     string functionName = reader.GetAttribute("functionName");
+                    RegisterUpdateAction(functionName);
                      break;
                 case "Params":
                     ReadXmlParams(reader);

@@ -41,6 +41,8 @@ public class World : IXmlSerializable {
     Action<Character> cbCharacterCreated;
     Action<Inventory> cbInventoryCreated;
 
+    FurnitureActions luaLibrary;
+
     // Доступ к аргументам
     public int Width
     {
@@ -204,7 +206,7 @@ public class World : IXmlSerializable {
             return;
         }
 
-        FurnitureActions fa = new FurnitureActions(myLuaCode);
+        luaLibrary = new FurnitureActions(myLuaCode);
     }
 
     void CreateFurniturePrototype()

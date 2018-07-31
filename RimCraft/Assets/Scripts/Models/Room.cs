@@ -6,10 +6,12 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 /// <summary>
 /// Комната с набором характеристик
 /// </summary>
+[MoonSharpUserData]
 public class Room : IXmlSerializable
 {
 
