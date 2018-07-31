@@ -26,7 +26,9 @@ public class Furniture : IXmlSerializable {
     //protected Action<Furniture, float> updateActions; // Какие-то действия которые умеет фурнитура
     protected List<string> updateActions; // строковые наименования функций полученных из LUA кода
 
-    public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
+    //public Func<Furniture, Enterablylity> isEnterable; // Условия прохода через фурнитуру (в форме методов которые возвращают Enterability)
+    public string isEnterableAction;
+
 
     // Перечень заданий связанных с данной конкретной фурнитурой
     List<Job> jobs;
@@ -65,7 +67,7 @@ public class Furniture : IXmlSerializable {
     // 0 тут означает, что через этот объект нельзя пройти
     public float movementCost { get; protected set; }
 
-    public bool roomEnclouser { get; protected set; }
+    public bool roomEnclosure { get; protected set; }
 
     // Размеры объекта в тайлах
     public int Width { get; protected set; }
@@ -109,7 +111,7 @@ public class Furniture : IXmlSerializable {
         this.objectType = other.objectType;
         this.Name = other.Name;
         this.movementCost = other.movementCost;
-        this.roomEnclouser = other.roomEnclouser;
+        this.roomEnclosure = other.roomEnclosure;
         this.Width = other.Width;
         this.Height = other.Height;
         this.tint = other.tint;
@@ -123,8 +125,9 @@ public class Furniture : IXmlSerializable {
 
         if (other.updateActions != null)
             this.updateActions = new List<string>(other.updateActions);
-        if (other.isEnterable != null)
-            this.isEnterable = (Func<Furniture, Enterablylity>)other.isEnterable.Clone();
+
+        this.isEnterableAction = other.isEnterableAction;
+
         if (other.funcPositionValidation != null)
             this.funcPositionValidation = (Func<Tile, bool>)other.funcPositionValidation.Clone();
     }
@@ -150,7 +153,7 @@ public class Furniture : IXmlSerializable {
 
         this.objectType = objectType;
         this.movementCost = movementCost;
-        this.roomEnclouser = roomEnclouser;
+        this.roomEnclosure = roomEnclouser;
         this.Width = width;
         this.Height = height;
         this.linksToNeighbour = linksToNeighbour;
@@ -297,6 +300,18 @@ public class Furniture : IXmlSerializable {
         return true;
     }
 
+    public Enterablylity IsEnterable()
+    {
+        if (isEnterableAction == null || isEnterableAction.Length == 0)
+        {
+            return Enterablylity.Yes;
+        }
+
+        DynValue result = FurnitureActions.Instance.CallFunction(isEnterableAction, this);
+
+        return (Enterablylity)result.Number;
+    }
+
     /// <summary>
     /// Демонтаж фурнитуры
     /// </summary>
@@ -311,7 +326,7 @@ public class Furniture : IXmlSerializable {
             cbOnRemoved(this);
         }
 
-        if (roomEnclouser)
+        if (roomEnclosure)
         {
             Room.DoRoomFloodFill(this.tile);
         }
@@ -328,11 +343,16 @@ public class Furniture : IXmlSerializable {
     /// <param name="key">ключевая строка</param>
     /// <param name="default_value">значение которое будет возвращено если ключевой строки не найдено в словаре</param>
     /// <returns></returns>
-    public float GetParameter(string key, float default_value = 0)
+    public float GetParameter(string key, float default_value)
     {
         if (furnParameters.ContainsKey(key) == false)
             return default_value;
         return furnParameters[key];
+    }
+
+    public float GetParameter(string key)
+    {
+        return GetParameter(key, 0);
     }
 
     public Tile GetJobSpotTile()
@@ -393,15 +413,6 @@ public class Furniture : IXmlSerializable {
         updateActions.Remove(luaFunctionName);
     }
 
-    //public bool __IsVaildPositionForDoor(Tile tile)
-    //{
-    //    if (__IsVaildPosition(tile) == false)
-    //        return false;
-    //    // Проверка на наличие пары стен N/S или W/E
-
-    //    return true;
-    //}
-
     /* ********************************************************
      * 
      *             Методы для Сохранения/Загрузки
@@ -445,34 +456,65 @@ public class Furniture : IXmlSerializable {
                     break;
                 case "EnclosesRooms":
                     reader.Read();
-                    roomEnclouser = reader.ReadContentAsBoolean();
-                    break;
-                case "OnUpdate":
-                    string functionName = reader.GetAttribute("functionName");
-                    RegisterUpdateAction(functionName);
-                     break;
-                case "Params":
-                    ReadXmlParams(reader);
+                    roomEnclosure = reader.ReadContentAsBoolean();
                     break;
                 case "BuildingJob":
                     float jobTime = float.Parse(reader.GetAttribute("jobTime"));
+
                     List<Inventory> invs = new List<Inventory>();
+
                     XmlReader invs_reader = reader.ReadSubtree();
-                    while(invs_reader.Read())
+
+                    while (invs_reader.Read())
                     {
                         if (invs_reader.Name == "Inventory")
                         {
-                            Inventory inv = new Inventory(
+                            // Found an inventory requirement, so add it to the list!
+                            invs.Add(new Inventory(
                                 invs_reader.GetAttribute("objectType"),
                                 int.Parse(invs_reader.GetAttribute("amount")),
                                 0
-                                );
-                            invs.Add(inv);
+                            ));
                         }
                     }
 
-                    Job j = new Job(null, objectType, FurnitureActions.JobComlete_FurnitureBuilding, jobTime, invs.ToArray());
+                    Job j = new Job(null,
+                        objectType,
+                        FurnitureActions.JobComplete_FurnitureBuilding, jobTime,
+                        invs.ToArray()
+                    );
+
                     World.current.SetFurnitureJobPrototype(j, this);
+
+                    break;
+                case "OnUpdate":
+
+                    string functionName = reader.GetAttribute("FunctionName");
+                    RegisterUpdateAction(functionName);
+
+                    break;
+                case "IsEnterable":
+
+                    isEnterableAction = reader.GetAttribute("FunctionName");
+
+                    break;
+
+                case "JobSpotOffset":
+                    jobSpotOffset = new Vector2(
+                        int.Parse(reader.GetAttribute("X")),
+                        int.Parse(reader.GetAttribute("Y"))
+                    );
+
+                    break;
+                case "JobSpawnSpotOffset":
+                    jobSpawnSpotOffset = new Vector2(
+                        int.Parse(reader.GetAttribute("X")),
+                        int.Parse(reader.GetAttribute("Y"))
+                    );
+
+                    break;
+                case "Params":
+                    ReadXmlParams(reader);  // Read in the Param tag
                     break;
             }
         }

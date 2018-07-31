@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 /// <summary>
 /// Этот класс содержит информацию о работе для персонажей
 /// </summary>
+[MoonSharpUserData]
 public class Job {
     //Пока делаем чтобы установка фурнитуры совершалась по средствам этого класса
 
@@ -32,6 +34,9 @@ public class Job {
     Action<Job> cbJobStopped;  // Событие вызываемое если работа отменена или работа не повторяется
     Action<Job> cbJobWorked; // Работа выполняется (в процессе / прогресс)
 
+    List<string> cbJobWorkedLua;
+    List<string> cbJobCompletedLua;
+
     public Dictionary<string, Inventory> inventoryRequirements; // Необходимые для работы материалы
 
 
@@ -42,6 +47,9 @@ public class Job {
         this.cbJobCompleted += cbJobComplete;
         this.jobTimeRequried = this.jobTime = jobTime;
         this.jobRepeats = jobRepeats;
+
+        cbJobWorkedLua = new List<string>();
+        cbJobCompletedLua = new List<string>();
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (jobInventoryRequirements != null)
@@ -60,6 +68,9 @@ public class Job {
         this.jobObjectType = other.jobObjectType;
         this.cbJobCompleted = other.cbJobCompleted;
         this.jobTime = other.jobTime;
+
+        cbJobWorkedLua = new List<string>(other.cbJobWorkedLua);
+        cbJobCompletedLua = new List<string>(other.cbJobWorkedLua);
 
         this.inventoryRequirements = new Dictionary<string, Inventory>();
         if (other.inventoryRequirements != null)
@@ -92,6 +103,14 @@ public class Job {
             if (cbJobWorked != null)
                 cbJobWorked(this);
 
+            if (cbJobWorkedLua != null)
+            {
+                foreach (string luaFunction in cbJobWorkedLua)
+                {
+                    FurnitureActions.Instance.CallFunction(luaFunction, this);
+                }
+            }
+
             return;
         }
 
@@ -102,6 +121,14 @@ public class Job {
         if (cbJobWorked != null)
             cbJobWorked(this);
 
+        if (cbJobWorkedLua != null)
+        {
+            foreach (string luaFunction in cbJobWorkedLua)
+            {
+                FurnitureActions.Instance.CallFunction(luaFunction, this);
+            }
+        }
+
         if (jobTime <= 0)
         {
             //Debug.Log("Работа выполнена");
@@ -110,6 +137,11 @@ public class Job {
                 // Происходит то, что должно произойти при завершении работы
                 // Выполняем методы которые подписались
                 cbJobCompleted(this);
+            }
+
+            foreach (string luaFunc in cbJobCompletedLua)
+            {
+                FurnitureActions.Instance.CallFunction(luaFunc, this);
             }
 
             if (jobRepeats == false)
@@ -229,5 +261,25 @@ public class Job {
     public void UnregisterWorkedCallback(Action<Job> cb)
     {
         cbJobWorked -= cb;
+    }
+
+    public void RegisterWorkedLuaCallback(string cb)
+    {
+        cbJobWorkedLua.Add(cb);
+    }
+
+    public void UnregisterWorkedLuaCallback(string cb)
+    {
+        cbJobWorkedLua.Remove(cb);
+    }
+
+    public void RegisterCompletedLuaCallback(string cb)
+    {
+        cbJobCompletedLua.Add(cb);
+    }
+
+    public void UnregisterCompletedLuaCallback(string cb)
+    {
+        cbJobCompletedLua.Remove(cb);
     }
 }

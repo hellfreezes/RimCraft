@@ -6,12 +6,14 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 
 
 /*
  * Независимый от Unity класс работающий с миром и хранящий ссылки на его составные части
  */
+ [MoonSharpUserData]
 public class World : IXmlSerializable {
     public static World current { get; protected set; }
 
@@ -378,7 +380,7 @@ public class World : IXmlSerializable {
         furnitures.Add(furn);
 
         // Вероятно надо вычислить образование комнат
-        if (doRoomFloodFill && furn.roomEnclouser)
+        if (doRoomFloodFill && furn.roomEnclosure)
         {
             Room.DoRoomFloodFill(furn.tile);
         }

@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoonSharp.Interpreter;
 
 // Это предметы, которые могут лежать на полу: ресурсы, стопки каких-либо предметов
 // также вероятно неустановленные объекты
+[MoonSharpUserData]
 public class Inventory {
 
     public string objectType = "Steel Plate";

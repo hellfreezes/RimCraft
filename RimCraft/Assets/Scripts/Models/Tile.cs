@@ -301,10 +301,10 @@ public class Tile : IXmlSerializable {
 
         // Проверить специальные флаги на возможность входа
         // Проверяем есть ли фурнитура в этом тайле и есть ли у фурнитуры специальные методы контролирующие вход
-        if (furniture != null && furniture.isEnterable != null)
+        if (furniture != null)
         {
             // Если есть, то спрашиваем у фурнитуры как через нее пройти
-            return furniture.isEnterable(furniture);
+            return furniture.IsEnterable();
         }
 
         // Поумолчанию через тайл можно пройти без условий

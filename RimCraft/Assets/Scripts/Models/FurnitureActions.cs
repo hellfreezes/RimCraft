@@ -21,12 +21,24 @@ public class FurnitureActions {
 
     public FurnitureActions(string rawLuaCode)
     {
-        // Зарегистрировать классы в MoonSharp
-        UserData.RegisterAssembly();
-
         instance = this;
 
+        // Tell the LUA interpreter system to load all the classes
+        // that we have marked as [MoonSharpUserData]
+        UserData.RegisterAssembly();
+
         myLuaScript = new Script();
+
+        // If we want to be able to instantiate a new object of a class
+        //   i.e. by doing    SomeClass.__new()
+        // We need to make the base type visible.
+        myLuaScript.Globals["Inventory"] = typeof(Inventory);
+        myLuaScript.Globals["Job"] = typeof(Job);
+
+        // Also to access statics/globals
+        myLuaScript.Globals["World"] = typeof(World);
+
+        //ActivateRemoteDebugger(myLuaScript);
         myLuaScript.DoString(rawLuaCode);
     }
 
@@ -48,7 +60,20 @@ public class FurnitureActions {
         }
     }
 
-    public static void JobComlete_FurnitureBuilding(Job theJob)
+    public DynValue CallFunction(string functionName, params object[] args)
+    {
+        object func = myLuaScript.Globals[functionName];
+        if (func == null)
+        {
+            Debug.LogError(functionName + " не является LUA функцией");
+            return null;
+        }
+
+        return myLuaScript.Call(func, args);
+    }
+
+
+    public static void JobComplete_FurnitureBuilding(Job theJob)
     {
         WorldController.Instance.world.PlaceFurniture(theJob.jobObjectType, theJob.tile);
         theJob.tile.pendingFurnitureJob = null;

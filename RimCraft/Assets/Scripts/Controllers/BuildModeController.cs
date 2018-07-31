@@ -163,7 +163,7 @@ public class BuildModeController : MonoBehaviour {
                 else
                 {
                     Debug.Log("Не задан прототип работы для создания сооружения: "+ furnitureType+". Применен дефолтный прототип.");
-                    j = new Job(t, furnitureType, FurnitureActions.JobComlete_FurnitureBuilding,
+                    j = new Job(t, furnitureType, FurnitureActions.JobComplete_FurnitureBuilding,
                     0.1f,
                     null);
                 }

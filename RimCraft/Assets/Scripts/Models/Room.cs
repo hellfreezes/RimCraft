@@ -204,7 +204,7 @@ public class Room : IXmlSerializable
             return;
         }
 
-        if (tile.furniture != null && tile.furniture.roomEnclouser)
+        if (tile.furniture != null && tile.furniture.roomEnclosure)
         {
             // Проверяемый тайл - это объект способный ограничивать комнаты (стена, дверь и тп)
             // Он не может быть частью комнаты
@@ -266,7 +266,7 @@ public class Room : IXmlSerializable
                         // Сосед существует и не является пустым (частью открытого пространства).
                         // Не включает тайлы, которые мы уже проверяли и назначили им новую комнату,
                         // тайлы, которые содержат объекты способные образоывать комнаты
-                        if (t2.room != newRoom && (t2.furniture == null || t2.furniture.roomEnclouser == false))
+                        if (t2.room != newRoom && (t2.furniture == null || t2.furniture.roomEnclosure == false))
                         {
                             tilesToCheck.Enqueue(t2);
                         }
