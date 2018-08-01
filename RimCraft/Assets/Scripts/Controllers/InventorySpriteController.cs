@@ -47,7 +47,7 @@ public class InventorySpriteController : MonoBehaviour {
         inv_go.transform.SetParent(this.transform, true);
 
         SpriteRenderer spriteRenderer = inv_go.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = SpriteManager.current.GetSprite(inv.objectType);
+        spriteRenderer.sprite = SpriteManager.current.GetSprite("Inventory", inv.objectType);
         spriteRenderer.sortingLayerName = "Inventory";
 
         if (inv.stackSize > 1)

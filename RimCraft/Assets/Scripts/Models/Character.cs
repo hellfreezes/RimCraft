@@ -85,7 +85,7 @@ public class Character : IXmlSerializable {
         // Но проверить возможно ли дойти до места работы всё же необходимо.
 
 
-        pathAStar = new Path_AStar(World.current, currTile, destTile);
+        pathAStar = new Path_AStar(World.current, currTile, destTile, "");
         if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
         {
             Debug.LogError("До пункта назначения (до работы) нет пути");
@@ -245,7 +245,7 @@ public class Character : IXmlSerializable {
             if (pathAStar == null || pathAStar.Lenght() == 0)
             {
                 // Путь еще не построен, значит построить
-                pathAStar = new Path_AStar(World.current, currTile, destTile);
+                pathAStar = new Path_AStar(World.current, currTile, destTile, "");
                 if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
                 {
                     Debug.LogError("До пункта назначения нет пути");

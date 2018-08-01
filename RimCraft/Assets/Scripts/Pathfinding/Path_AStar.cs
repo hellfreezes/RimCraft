@@ -8,8 +8,11 @@ public class Path_AStar {
 
     Queue<Tile> path;
 
-    public Path_AStar(World world, Tile tileStart, Tile tileEnd)
+    public Path_AStar(World world, Tile tileStart, Tile tileEnd, string objectType)
     {
+        // Если tileEnd = null, то запрашивается сканирование в поисках ближайшего objectType
+        // 
+
         // Проверить существование сгенерированной карты пути. И если ее нет, то сгенерировать
         if (world.tileGraph == null)
         {

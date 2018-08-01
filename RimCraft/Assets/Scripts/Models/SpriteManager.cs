@@ -44,11 +44,13 @@ public class SpriteManager : MonoBehaviour {
         string[] filesInDirectory = Directory.GetFiles(filePath);
         foreach (string file in filesInDirectory)
         {
-            LoadImage(file);
+            string spriteCategory = new DirectoryInfo(filePath).Name;
+
+            LoadImage(spriteCategory, file);
         }
     }
 
-    void LoadImage(string filePath)
+    void LoadImage(string spriteCategory, string filePath)
     {
         byte[] imageBytes = File.ReadAllBytes(filePath);
 
@@ -78,7 +80,7 @@ public class SpriteManager : MonoBehaviour {
                 {
                     do
                     {
-                        ReadSpriteFromXml(reader, imageTexture);
+                        ReadSpriteFromXml(spriteCategory, reader, imageTexture);
                     } while (reader.ReadToNextSibling("Sprite"));
                 } else
                 {
@@ -87,13 +89,13 @@ public class SpriteManager : MonoBehaviour {
             } catch
             {
                 // Невозможно прочесть файл. Инструкции по вычленению спрайтов отсутствуют
-                LoadSprite(baseSpriteName, imageTexture, new Rect(0, 0, imageTexture.width, imageTexture.height), 32);
+                LoadSprite(spriteCategory, baseSpriteName, imageTexture, new Rect(0, 0, imageTexture.width, imageTexture.height), 32);
             }
         }
 
     }
 
-    void ReadSpriteFromXml(XmlReader reader, Texture2D imageTexture)
+    void ReadSpriteFromXml(string spriteCategory, XmlReader reader, Texture2D imageTexture)
     {
         string spriteName = reader.GetAttribute("name");
         //TODO: написать обработчик ошибок парсинга
@@ -103,19 +105,22 @@ public class SpriteManager : MonoBehaviour {
         int h = int.Parse(reader.GetAttribute("h"));
         int pixelsPerUnit = int.Parse(reader.GetAttribute("pixelsPerUnit"));
 
-        LoadSprite(spriteName, imageTexture, new Rect(x, y, w, h), pixelsPerUnit);
+        LoadSprite(spriteCategory, spriteName, imageTexture, new Rect(x, y, w, h), pixelsPerUnit);
     }
 
-    void LoadSprite(string spriteName, Texture2D imageTexture, Rect spriteCoordinates, int pixelsPerUnity)
+    void LoadSprite(string spriteCategory, string spriteName, Texture2D imageTexture, Rect spriteCoordinates, int pixelsPerUnity)
     {
+        spriteName = spriteCategory + "/" + spriteName;
+
         Vector2 pivotPoint = new Vector2(0.5f, 0.5f); // середина
 
         Sprite s = Sprite.Create(imageTexture, spriteCoordinates, pivotPoint, pixelsPerUnity);
         sprites[spriteName] = s;
     }
 
-    public Sprite GetSprite(string spriteName)
+    public Sprite GetSprite(string spriteCategory, string spriteName)
     {
+        spriteName = spriteCategory + "/" + spriteName;
         if (sprites.ContainsKey(spriteName) == false)
         {
             //Debug.LogError("Спрайт с имененм " + spriteName + " отсутсвует в коллекции");

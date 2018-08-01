@@ -56,7 +56,7 @@ public class FurnitureSpriteController : MonoBehaviour {
 
             if (northTile != null && southTile != null &&
                 northTile.furniture != null && southTile.furniture != null &&
-                northTile.furniture.objectType == "Wall" && southTile.furniture.objectType == "Wall")
+                northTile.furniture.objectType.Contains("Wall") && southTile.furniture.objectType.Contains("Wall"))
             {
                 furn_go.transform.rotation = Quaternion.Euler(0, 0, 90);
                 //furn_go.transform.Translate(1f, 0, 0, Space.World); // Не ну это капец! Так нельзя! :)
@@ -137,7 +137,7 @@ public class FurnitureSpriteController : MonoBehaviour {
             }
             // end of hardcode
 
-            return SpriteManager.current.GetSprite(spriteName);
+            return SpriteManager.current.GetSprite("Furniture", spriteName);
         }
 
         // Если объект составной то продолжаем работать
@@ -175,15 +175,15 @@ public class FurnitureSpriteController : MonoBehaviour {
 
         
 
-        return SpriteManager.current.GetSprite(spriteName);
+        return SpriteManager.current.GetSprite("Furniture", spriteName);
     }
 
     public Sprite GetSpriteForFurniture(string objectType)
     {
-        Sprite s = SpriteManager.current.GetSprite(objectType);
+        Sprite s = SpriteManager.current.GetSprite("Furniture", objectType);
         if (s == null)
         {
-            s = SpriteManager.current.GetSprite(objectType + "_");
+            s = SpriteManager.current.GetSprite("Furniture", objectType + "_");
         }
 
         return s;

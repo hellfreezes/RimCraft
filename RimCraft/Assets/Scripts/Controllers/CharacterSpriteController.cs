@@ -43,7 +43,7 @@ public class CharacterSpriteController : MonoBehaviour {
         //obj_go.transform.SetParent(this.transform, true);
 
         SpriteRenderer spriteRenderer = obj_go.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = SpriteManager.current.GetSprite("p1_front");
+        spriteRenderer.sprite = SpriteManager.current.GetSprite("Characters", "p1_front");
         spriteRenderer.sortingLayerName = "Character";
 
         // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 

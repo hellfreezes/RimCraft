@@ -188,9 +188,13 @@ public class InventoryManager {
         {
             if (inv.tile != null && (canTakeFromStockpile || inv.tile.furniture == null || inv.tile.furniture.IsStockpile() == false))
             {
+                // Найти путь к предмету и сохранить путь к нему
+
                 return inv;
             }
         }
+
+        // Вернуть кратчайший путь
 
         return null;
     }
