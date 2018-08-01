@@ -6,8 +6,6 @@ public class CharacterSpriteController : MonoBehaviour {
 
     private Dictionary<Character, GameObject> characterGameObjectMap; // Связка между персонажами и их игровыми объектами
 
-    private Dictionary<string, Sprite> charaterSprites;
-
     World world
     {
         get { return WorldController.Instance.world; }
@@ -15,8 +13,6 @@ public class CharacterSpriteController : MonoBehaviour {
 
     void Start()
     {
-        LoadSprites();
-
         characterGameObjectMap = new Dictionary<Character, GameObject>();
 
         world.RegisterCharacterCreated(OnCharacterCreated);
@@ -28,15 +24,6 @@ public class CharacterSpriteController : MonoBehaviour {
         }
     }
 
-    void LoadSprites()
-    {
-        charaterSprites = new Dictionary<string, Sprite>();
-        Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Characters/");
-        foreach (Sprite s in sprites)
-        {
-            charaterSprites.Add(s.name, s);
-        }
-    }
 
     // Подписчик на событие в World, которое происходит когда фурнитура создается
     void OnCharacterCreated(Character character)
@@ -56,7 +43,7 @@ public class CharacterSpriteController : MonoBehaviour {
         //obj_go.transform.SetParent(this.transform, true);
 
         SpriteRenderer spriteRenderer = obj_go.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = charaterSprites["p1_front"];
+        spriteRenderer.sprite = SpriteManager.current.GetSprite("p1_front");
         spriteRenderer.sortingLayerName = "Character";
 
         // Подписывает метод OnTileTypeChanged тайл на событие изменения tile_data. 

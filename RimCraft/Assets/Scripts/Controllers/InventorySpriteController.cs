@@ -8,7 +8,6 @@ public class InventorySpriteController : MonoBehaviour {
     private GameObject inventoryUIPrefab;
 
     private Dictionary<Inventory, GameObject> inventoryGameObjectMap;
-    private Dictionary<string, Sprite> inventorySprites;
 
     private World world
     {
@@ -17,8 +16,6 @@ public class InventorySpriteController : MonoBehaviour {
 
     void Start()
     {
-        LoadSprites();
-
         inventoryGameObjectMap = new Dictionary<Inventory, GameObject>();
 
         world.RegisterInventoryCreated(OnInventoryCreated);
@@ -30,16 +27,6 @@ public class InventorySpriteController : MonoBehaviour {
             {
                 OnInventoryCreated(inv);
             }
-        }
-    }
-
-    void LoadSprites()
-    {
-        inventorySprites = new Dictionary<string, Sprite>();
-        Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Inventory/");
-        foreach (Sprite s in sprites)
-        {
-            inventorySprites.Add(s.name, s);
         }
     }
 
@@ -60,7 +47,7 @@ public class InventorySpriteController : MonoBehaviour {
         inv_go.transform.SetParent(this.transform, true);
 
         SpriteRenderer spriteRenderer = inv_go.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = inventorySprites[inv.objectType];
+        spriteRenderer.sprite = SpriteManager.current.GetSprite(inv.objectType);
         spriteRenderer.sortingLayerName = "Inventory";
 
         if (inv.stackSize > 1)

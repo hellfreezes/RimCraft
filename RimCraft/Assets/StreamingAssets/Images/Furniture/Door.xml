@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Sprites>
+	<Sprite name="Door" x="32" y="223" w="32" h="32" pixelsPerUnit="32"/>
+	<Sprite name="Door_openness_1" x="32" y="191" w="32" h="32" pixelsPerUnit="32"/>
+	<Sprite name="Door_openness_2" x="32" y="159" w="32" h="32" pixelsPerUnit="32"/>
+	<Sprite name="Door_openness_3" x="32" y="127" w="32" h="32" pixelsPerUnit="32"/>
+</Sprites>

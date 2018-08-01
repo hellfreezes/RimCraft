@@ -10,16 +10,12 @@ public class FurnitureSpriteController : MonoBehaviour {
 
     private Dictionary<Furniture, GameObject> furnitureGameObjectMap; // Связка между установленными объектами и их игровыми объектами
 
-    private Dictionary<string, Sprite> furnitureSprites;
-
     World world
     {
         get { return WorldController.Instance.world; }
     }
 
     void Start() {
-        LoadSprites();
-
         furnitureGameObjectMap = new Dictionary<Furniture, GameObject>();
 
         world.RegisterFurnitureCreated(OnFurnitureCreated);
@@ -27,17 +23,6 @@ public class FurnitureSpriteController : MonoBehaviour {
         foreach(Furniture furn in world.furnitures)
         {
             OnFurnitureCreated(furn);
-        }
-    }
-
-    void LoadSprites()
-    {
-        furnitureSprites = new Dictionary<string, Sprite>();
-        Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Furniture/");
-        foreach (Sprite s in sprites)
-        {
-            furnitureSprites.Add(s.name, s);
-            //Debug.Log(s.name + " : " + s);
         }
     }
 
@@ -152,7 +137,7 @@ public class FurnitureSpriteController : MonoBehaviour {
             }
             // end of hardcode
 
-            return furnitureSprites[spriteName];
+            return SpriteManager.current.GetSprite(spriteName);
         }
 
         // Если объект составной то продолжаем работать
@@ -182,28 +167,26 @@ public class FurnitureSpriteController : MonoBehaviour {
             spriteName += "W";
         }
 
-        if (furnitureSprites.ContainsKey(spriteName) == false)
-        {
-            Debug.LogError("В базе нет спрайта с именем: " + spriteName);
-            return null;
-        }
+        //if (furnitureSprites.ContainsKey(spriteName) == false)
+        //{
+        //    Debug.LogError("В базе нет спрайта с именем: " + spriteName);
+        //    return null;
+        //}
 
         
 
-        return furnitureSprites[spriteName];
+        return SpriteManager.current.GetSprite(spriteName);
     }
 
     public Sprite GetSpriteForFurniture(string objectType)
     {
-        if (furnitureSprites.ContainsKey(objectType))
+        Sprite s = SpriteManager.current.GetSprite(objectType);
+        if (s == null)
         {
-            return furnitureSprites[objectType];
-        } else if (furnitureSprites.ContainsKey(objectType + "_"))
-        {
-            return furnitureSprites[objectType + "_"];
+            s = SpriteManager.current.GetSprite(objectType + "_");
         }
-        Debug.LogError("В базе нет спрайта с именем: " + objectType);
-        return null;
+
+        return s;
         
     }
 }

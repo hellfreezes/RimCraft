@@ -518,6 +518,7 @@ GameObject:
   serializedVersion: 5
   m_Component:
   - component: {fileID: 465507859}
+  - component: {fileID: 465507860}
   m_Layer: 0
   m_Name: Controllers
   m_TagString: Untagged
@@ -547,6 +548,17 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &465507860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465507858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bb94163052cf054ea877a9286c573e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -946,8 +958,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8f801b9a2a125b4a8da03e2671f0c40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  floorSprite: {fileID: 21300000, guid: 9dd9dc0b000fef946bd2f45d6c42532d, type: 3}
-  emptySprite: {fileID: 21300000, guid: 518b83275d99e8a43b55ccc3e29eaa56, type: 3}
+  floorSprite: {fileID: 21300000, guid: e9aa86c8fc1f236478a1d573bd6b2553, type: 3}
+  emptySprite: {fileID: 21300000, guid: 03fac35f0b989374da3f0011f28ad454, type: 3}
 --- !u!1 &917600432
 GameObject:
   m_ObjectHideFlags: 0
