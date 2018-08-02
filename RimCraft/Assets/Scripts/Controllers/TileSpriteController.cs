@@ -7,13 +7,6 @@ using UnityEngine;
  * Класс юнити, управляющий нашим миром
  */
 public class TileSpriteController : MonoBehaviour {
-
-    [SerializeField]
-    private Sprite floorSprite;
-    [SerializeField]
-    private Sprite emptySprite;
-
-
     private Dictionary<Tile, GameObject> tileGameObjectMap; // Связь между тайлом и объектом в мире
 
     World world
@@ -41,7 +34,7 @@ public class TileSpriteController : MonoBehaviour {
                 //Рендер для объекта
                 //Также добавляем пустой спрайт
                 SpriteRenderer spriteRenderer = tile_go.AddComponent<SpriteRenderer>();
-                spriteRenderer.sprite = emptySprite;
+                spriteRenderer.sprite = SpriteManager.current.GetSprite("Tile", "Empty");
 
                 OnTileChanged(tile_data);
                 // tile_data.RegisterTileTypeChangeCallBack((tile) => { OnTileTypeChanged(tile, tile_go); }); // Старый вариант без использования tileGameObjectMap
@@ -97,11 +90,11 @@ public class TileSpriteController : MonoBehaviour {
         // Меняем спрайт тайла в зависимости от его типа
         if (tile_data.Type == TileType.Floor)
         {
-            tile_go.GetComponent<SpriteRenderer>().sprite = floorSprite;
+            tile_go.GetComponent<SpriteRenderer>().sprite = SpriteManager.current.GetSprite("Tile", "Floor");
 
         } else if (tile_data.Type == TileType.Empty)
         {
-            tile_go.GetComponent<SpriteRenderer>().sprite = emptySprite;
+            tile_go.GetComponent<SpriteRenderer>().sprite = SpriteManager.current.GetSprite("Tile", "Empty");
         } else
         {
             // Возвращаем ошибку если тип у тайла не зарегистрирован в TileType (разве это возможно?)

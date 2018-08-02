@@ -8,7 +8,8 @@ public class Path_AStar {
 
     Queue<Tile> path;
 
-    public Path_AStar(World world, Tile tileStart, Tile tileEnd, string objectType)
+    public Path_AStar(World world, Tile tileStart, Tile tileEnd, 
+                        string objectType = null, int desiredAmount = 0, bool canTakeFromStockpile = false)
     {
         // Если tileEnd = null, то запрашивается сканирование в поисках ближайшего objectType
         // 
@@ -28,15 +29,22 @@ public class Path_AStar {
             Debug.LogError("Стартовый тайл не содержится в списке вершин карты поиска пути.");
             return;
         }
-        // Проверяем входит ли тайл прибытия в перечень вершин
-        if (nodes.ContainsKey(tileEnd) == false)
-        {
-            Debug.LogError("Конечный тайл не содержится в списке вершин карты поиска пути.");
-            return;
-        }
 
         Path_Node<Tile> start = nodes[tileStart];
-        Path_Node<Tile> goal = nodes[tileEnd];
+        Path_Node<Tile> goal = null;
+
+        // Если tileEnd = null, то мы не ищем путь к месту назначения, мы просто ищем ближайщий объект objectType (инвентарь)
+        if (tileEnd != null)
+        {
+            // Проверяем входит ли тайл прибытия в перечень вершин
+            if (nodes.ContainsKey(tileEnd) == false)
+            {
+                Debug.LogError("Конечный тайл не содержится в списке вершин карты поиска пути.");
+                return;
+            }
+
+            goal = nodes[tileEnd];
+        }
 
         // Создаем перечень вершин:
         // Проверенные и непригоные вершины
@@ -71,12 +79,28 @@ public class Path_AStar {
             Path_Node<Tile> current = OpenSet.Dequeue();
 
             //Достигли точки назначения
-            if (current == goal)
+            if (goal != null)
             {
-                // Местоназначения достигнутл. Конвертируем результат в череду тайлов
-                // по которым надо пройтись чтобы попасть в финишную точку и выходим из метода
-                reconstruct_path(Came_From, current);
-                return;
+                //Ищем путь
+                if (current == goal)
+                {
+                    // Местоназначения достигнутл. Конвертируем результат в череду тайлов
+                    // по которым надо пройтись чтобы попасть в финишную точку и выходим из метода
+                    reconstruct_path(Came_From, current);
+                    return;
+                }
+
+            } else
+            {
+                //Ищем ближайший предмет
+                if (current.data.inventory != null && current.data.inventory.objectType == objectType)
+                {
+                    if (canTakeFromStockpile || current.data.furniture == null || current.data.furniture.IsStockpile() == false)
+                    {
+                        reconstruct_path(Came_From, current);
+                        return;
+                    }
+                }
             }
 
             ClosetSet.Add(current);
@@ -138,6 +162,14 @@ public class Path_AStar {
 
     float heuristic_cost_estimate(Path_Node<Tile> a, Path_Node<Tile> b)
     {
+        if (b == null)
+        {
+            // Пункт назначения отсутсвует
+            // Скорее всего мы просто ищем какой то предмет во всех направлениях
+            // 0 - говорит о том, что любое направление подойдет
+            return 0f;
+        }
+
         return Mathf.Sqrt(
             Mathf.Pow(a.data.X - b.data.X, 2) +
             Mathf.Pow(a.data.Y - b.data.Y, 2)
@@ -175,5 +207,13 @@ public class Path_AStar {
         if (path == null)
             return 0;
         return path.Count;
+    }
+
+    public Tile EndTile()
+    {
+        if (path == null || path.Count == 0)
+            return null;
+
+        return path.Last();
     }
 }

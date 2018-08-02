@@ -59,6 +59,7 @@
         <LinksToNeighbours>true</LinksToNeighbours>
 
         <OnUpdate FunctionName="Stockpile_UpdateAction" />
+		<BuildingJob jobTime="0"></BuildingJob>
 	</Furniture>
 
 	<Furniture objectType="Oxygen Generator">

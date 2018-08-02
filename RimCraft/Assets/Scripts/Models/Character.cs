@@ -33,20 +33,21 @@ public class Character : IXmlSerializable {
     Tile nextTile;  // Следующий тайл в череде тайлов до тайла назначения
                     // Место в которое движется персонаж. Если мы не двигаемся то curr=dest
 
-    private Tile _destTile;
-    public Tile destTile
+    private Tile destTile;
+    public Tile DestTile
     {
-        get { return _destTile; }
+        get { return destTile; }
         set {
-            if (_destTile != value)
+            if (destTile != value)
             {
-                _destTile = value;
+                destTile = value;
                 pathAStar = null; // Если произошла смена точки назначения, то путь нуждается в перестройке
             }
         }
     }
     Path_AStar pathAStar; // система поиска пути для персонажа
-    
+
+    float jobSerachCooldown = 0;
     float movementProcentage;
     Job myJob; // Задание над которым работает персонаж
     public Inventory inventory; //Предмето, который несет персонаж (это не то, что надето и не то, во что экипирован персонаж)
@@ -65,7 +66,7 @@ public class Character : IXmlSerializable {
     // Конструктор
     public Character(Tile tile)
     {
-        currTile = destTile = nextTile = tile;
+        currTile = DestTile = nextTile = tile;
     }
 
     void GetNewJob()
@@ -75,7 +76,7 @@ public class Character : IXmlSerializable {
         if (myJob == null)
             return;
 
-        destTile = myJob.tile;
+        DestTile = myJob.tile;
         //Подписываем метод OnJobEnded на указанные ниже события происходящие в Job
         //myJob.RegisterJobCompletedCallback(OnJobStopped);
         myJob.RegisterJobStoppedCallback(OnJobStopped);
@@ -85,28 +86,37 @@ public class Character : IXmlSerializable {
         // Но проверить возможно ли дойти до места работы всё же необходимо.
 
 
-        pathAStar = new Path_AStar(World.current, currTile, destTile, "");
+        pathAStar = new Path_AStar(World.current, currTile, DestTile, "");
         if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
         {
             Debug.LogError("До пункта назначения (до работы) нет пути");
             //Надо бы отменить работу тут
             AbandonJob(); // Надо бы вернуть работу обратно в очередь
-            destTile = currTile;
+            DestTile = currTile;
         }
     }
 
     void Update_DoJob(float deltaTime)
     {
+        jobSerachCooldown -= deltaTime;
+
         // Есть ли у нас задание
         if (myJob == null)
         { //Персонаж свободен. У него нет работы
             // Значит взять работу из очереди работ
+
+            if (jobSerachCooldown > 0)
+            {
+                return;
+            }
+            
             GetNewJob();
 
             if (myJob == null) // Если эта новая работа НЕсуществует то,
             {
                 // Для персонажа нет работы. Выходим из метода
-                destTile = currTile;
+                jobSerachCooldown = UnityEngine.Random.Range(0.1f, 0.2f);
+                DestTile = currTile;
                 return;
             }
         }
@@ -150,7 +160,7 @@ public class Character : IXmlSerializable {
                     else
                     {
                         // Всё еще идем в место работы
-                        destTile = myJob.tile;
+                        DestTile = myJob.tile;
                         return;
                     }
                 }
@@ -186,19 +196,34 @@ public class Character : IXmlSerializable {
 
                     Inventory desired = myJob.GetFirstDesiredInventory();
 
-                    // FIXME: временное решение. Примитивно
-                    Inventory supplier = World.current.inventoryManager.GetClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize, myJob.canPickupFromStockpile);
 
-                    if (supplier == null)
-                    { // На сцене нет нужного предмета для данной работы
-                        Debug.Log(desired.objectType + " не найдено ни в одном тайле");
-                        AbandonJob(); // Отказываемся от этой работы
+                    if (currTile != nextTile)
+                    {
                         return;
                     }
 
-                    // Идем тайл в котором лежит нужный материал
-                    // destTile = <тайл с нужным материалом>
-                    destTile = supplier.tile;
+                    if (pathAStar != null && pathAStar.EndTile() != null &&
+                        pathAStar.EndTile().inventory != null && pathAStar.EndTile().inventory.objectType == desired.objectType)
+                    {
+                        // Мы уже движемся к необходимому предмету
+
+                    } else {
+                        pathAStar = World.current.inventoryManager.GetPathToClosestInventoryOfType(desired.objectType, currTile, desired.maxStackSize - desired.stackSize, myJob.canPickupFromStockpile);
+
+                        if (pathAStar == null || pathAStar.Lenght() == 0)
+                        { // На сцене нет нужного предмета для данной работы
+                            //Debug.Log(desired.objectType + " не найдено ни в одном тайле");
+                            AbandonJob(); // Отказываемся от этой работы
+                            return;
+                        }
+
+                        // Идем тайл в котором лежит нужный материал
+                        // destTile = <тайл с нужным материалом>
+                        destTile = pathAStar.EndTile();
+
+                        nextTile = pathAStar.Dequeue();
+                    }
+
                     return;
                 }
             }
@@ -208,7 +233,7 @@ public class Character : IXmlSerializable {
         // Если персонаж достиг этой точки то,
         // Для работы есть весь необходимый материал
         // Убедимся, что тайл места назначения - это тайл с работой
-        destTile = myJob.tile;
+        DestTile = myJob.tile;
 
         // Проверяем есть ли у нас цель куда идти
         // Мы наместе?
@@ -228,7 +253,7 @@ public class Character : IXmlSerializable {
         //if (destTile == null)
         //    return;
 
-        if (currTile == destTile)
+        if (currTile == DestTile)
         {// Мы никуда не движимся
             pathAStar = null;
             return; // Мы там где должны быть
@@ -245,7 +270,7 @@ public class Character : IXmlSerializable {
             if (pathAStar == null || pathAStar.Lenght() == 0)
             {
                 // Путь еще не построен, значит построить
-                pathAStar = new Path_AStar(World.current, currTile, destTile, "");
+                pathAStar = new Path_AStar(World.current, currTile, DestTile, "");
                 if (pathAStar.Lenght() == 0) // Попытались построить путь, но пройти в конечную точку невозможно
                 {
                     Debug.LogError("До пункта назначения нет пути");
@@ -343,7 +368,7 @@ public class Character : IXmlSerializable {
         /// чтобы исключить ее из этого списка и проверить снова.
 
         //Debug.Log("Персонаж отказался от работы: " + myJob);
-        nextTile = destTile = currTile;
+        nextTile = DestTile = currTile;
         pathAStar = null;
         //Debug.Log("Возврат работы обратно в очередь: " + myJob);
         World.current.jobQueue.Enqueue(myJob);
@@ -359,7 +384,7 @@ public class Character : IXmlSerializable {
             Debug.Log("Тайл не является соседним.");
         }
 
-        destTile = tile;
+        DestTile = tile;
     }
 
     // Метод вызываемый когда произошло событие отмены или завершения определенной работы

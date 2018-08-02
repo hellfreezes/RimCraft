@@ -27,6 +27,15 @@ public class MouseController : MonoBehaviour
 
     MouseMode currentMode = MouseMode.SELECT;
 
+    class SelectionInfo
+    {
+        public Tile tile;
+        public object[] stuffInTile;
+        public int subSelection;
+    }
+
+    SelectionInfo mySelection;
+
     // Use this for initialization
     void Start () {
         fsc = FindObjectOfType<FurnitureSpriteController>();
@@ -70,10 +79,62 @@ public class MouseController : MonoBehaviour
         //UpdateCursor();
         UpdateDragging();
         UpdateCameraMovement();
+        UpdateSelection();
 
         //Записываем текущее положение мыши для следующего кадра (в след кадре - это будет уже предыдущее положение мыши)
         lastFramePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         lastFramePosition.z = 0;
+    }
+
+    private void UpdateSelection()
+    {
+        if (Input.GetKeyUp(KeyCode.Escape))
+        {
+            mySelection = null;
+        }
+
+        if (currentMode != MouseMode.SELECT)
+        {
+            return;
+        }
+
+        // Если мышь над элементом интерфейса, то отменяем выполнение
+        if (EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            //Кнопка мыши отпущена. Обновляем выбранный объект
+            Tile tileUnderMouse = GetMouseOverTile();
+
+            if (tileUnderMouse == null)
+                return;
+
+            if (mySelection == null || mySelection.tile != tileUnderMouse)
+            {
+                // Выбран новый тайл
+                mySelection = new SelectionInfo();
+                mySelection.tile = tileUnderMouse;
+                mySelection.stuffInTile = new object[] { null, tileUnderMouse.furniture, tileUnderMouse.inventory, tileUnderMouse };
+                for (int i = 0; i < mySelection.stuffInTile.Length; i++)
+                {
+                    if (mySelection.stuffInTile[i] != null)
+                    {
+                        mySelection.subSelection = i;
+                        break;
+                    }
+                }
+            } else
+            {
+                // Тайл тотже значит надо выбрать другой объект в этом тайле для отображения инфы
+                do
+                {
+                    mySelection.subSelection = (mySelection.subSelection + 1) % mySelection.stuffInTile.Length;
+                } while (mySelection.stuffInTile[mySelection.subSelection] == null);
+            }
+        }
     }
 
     // Обработка нажатия левой кнопки мыши

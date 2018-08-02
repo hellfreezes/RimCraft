@@ -30,7 +30,7 @@ public class JobSpriteController : MonoBehaviour {
 
         if (jobGameObjectMap.ContainsKey(job))
         {
-            Debug.LogError("Попытка создать работу, которая уже есть в списке. Вероятно работа была доавлена в очередь заново.");
+            //Debug.LogError("Попытка создать работу, которая уже есть в списке. Вероятно работа была доавлена в очередь заново.");
             return;
         }
 

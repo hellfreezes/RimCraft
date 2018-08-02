@@ -32,7 +32,7 @@ public class SpriteManager : MonoBehaviour {
 
     void LoadSpritesFromDirectory(string filePath)
     {
-        Debug.Log("Загружаются спрайты из директории: " + filePath);
+        // Debug.Log("Загружаются спрайты из директории: " + filePath);
         // Скинруем на предмет субдиректорий и если так то выполняем этот же метод для них
         string[] subDirectories = Directory.GetDirectories(filePath);
         foreach(string subDirectory in subDirectories)

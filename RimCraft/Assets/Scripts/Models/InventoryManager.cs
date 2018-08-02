@@ -172,30 +172,24 @@ public class InventoryManager {
     /// <returns>Если поблизости нет необходимого количества, то возвращает самый большой стак из найденных</returns>
     public Inventory GetClosestInventoryOfType(string objectType, Tile t, int desiredAmount, bool canTakeFromStockpile)
     {
-        //FIXME: 
-        // 1) Метод на самом деле выдает не самый ближайший предмет
-        // 2) Пока что нет способа выдать ближайший предмет. Нужно уточнять наш inventories
+        Path_AStar path = GetPathToClosestInventoryOfType(objectType, t, desiredAmount, canTakeFromStockpile);
 
+        return path.EndTile().inventory;
+    }
+
+    public Path_AStar GetPathToClosestInventoryOfType(string objectType, Tile t, int desiredAmount, bool canTakeFromStockpile)
+    {
         if (inventories.ContainsKey(objectType) == false)
         { // Предмет в мире не найден
-            Debug.LogError("В мире нет предмета " + objectType);
+            Debug.Log("В мире нет предмета " + objectType);
             return null;
         }
 
 
-        // Перебирает все стаки на сцене и выдает первый попавшийся соответствующий критериям
-        foreach (Inventory inv in inventories[objectType])
-        {
-            if (inv.tile != null && (canTakeFromStockpile || inv.tile.furniture == null || inv.tile.furniture.IsStockpile() == false))
-            {
-                // Найти путь к предмету и сохранить путь к нему
-
-                return inv;
-            }
-        }
+        Path_AStar path = new Path_AStar(World.current, t, null, objectType);
 
         // Вернуть кратчайший путь
 
-        return null;
+        return path;
     }
 }

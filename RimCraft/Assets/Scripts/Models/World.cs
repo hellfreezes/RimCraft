@@ -76,6 +76,8 @@ public class World : IXmlSerializable {
 
         //Создаем одного персонажа (Debug)
         CreateCharacter(GetTileAt(Width / 2, Height / 2));
+        CreateCharacter(GetTileAt(Width / 2 + 2, Height / 2));
+        CreateCharacter(GetTileAt(Width / 2 + 4, Height / 2));
     }
 
     /// <summary>
